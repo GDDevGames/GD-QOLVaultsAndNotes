@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "qolvaultsandnotes:block/bulletin_board" , "y": 180},
+    "facing=south": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 0 },
+    "facing=east": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 270 },
+    "facing=west": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 90 }
+  }
+}
