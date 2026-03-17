@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "qolvaultsandnotes:block/bulletin_board" , "y": 180},
-    "facing=south": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 0 },
-    "facing=east": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 270 },
-    "facing=west": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 90 }
+    "activated=false,facing=north": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 180 },
+    "activated=false,facing=south": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 0 },
+    "activated=false,facing=east": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 270 },
+    "activated=false,facing=west": { "model": "qolvaultsandnotes:block/bulletin_board", "y": 90 },
+    "activated=true,facing=north": { "model": "qolvaultsandnotes:block/bulletin_board_activated", "y": 180 },
+    "activated=true,facing=south": { "model": "qolvaultsandnotes:block/bulletin_board_activated", "y": 0 },
+    "activated=true,facing=east": { "model": "qolvaultsandnotes:block/bulletin_board_activated", "y": 270 },
+    "activated=true,facing=west": { "model": "qolvaultsandnotes:block/bulletin_board_activated", "y": 90 }
   }
 }

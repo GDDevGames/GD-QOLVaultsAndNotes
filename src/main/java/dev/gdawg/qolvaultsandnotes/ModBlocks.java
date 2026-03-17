@@ -14,7 +14,7 @@ public class ModBlocks {
 
     // Creates a new Block with the id "examplemod:example_block", combining the namespace and path
     public static final DeferredBlock<CreateBlock> BULLETIN_BOARD_BLOCK = BLOCKS.register("bulletin_board",
-            id -> new CreateBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().setId(ResourceKey.create(Registries.BLOCK, id))));
+            id -> new CreateBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
 
     // .setId just has to do with setting a block id for a block, since apparently since of 1.21 and further forward, they added so you have to manually add that stuff
     // ExampleBlock is a new class or whatever made because registerSimpleBlock is not that functionally useful, instead it was just better to remake the whole thing into it's own register

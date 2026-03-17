@@ -13,5 +13,6 @@ public class QOLVaultsAndNotes {
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
     }
 }
