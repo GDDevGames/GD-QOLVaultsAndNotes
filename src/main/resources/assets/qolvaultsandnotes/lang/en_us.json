@@ -1,10 +1,7 @@
 {
-  "itemGroup.qolvaultsandnotes": "Example Mod Tab",
+  "itemGroup.qolvaultsandnotes": "Vaults And Notes",
   "block.qolvaultsandnotes.bulletin_board": "Bulletin Board",
   "item.qolvaultsandnotes.bulletin_board_item": "Bulletin Board",
-
-  "qolvaultsandnotes.configuration.title": "Example Mod Configs",
-  "qolvaultsandnotes.configuration.section.qolvaultsandnotes.common.toml": "Example Mod Configs",
-  "qolvaultsandnotes.configuration.section.qolvaultsandnotes.common.toml.title": "Example Mod Configs",
-  "qolvaultsandnotes.configuration.items": "Item List"
+  "block.qolvaultsandnotes.safe": "Safe",
+  "item.qolvaultsandnotes.safe_item": "Safe"
 }

@@ -16,6 +16,10 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("bulletin_board", () ->
                     new BlockEntityType<>(BulletinBoardBlockEntity::new, Set.of(ModBlocks.BULLETIN_BOARD_BLOCK.get())));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafeBlockEntity>> SAFE_ENTITY =
+            BLOCK_ENTITIES.register("safe", () ->
+                    new BlockEntityType<>(SafeBlockEntity::new, Set.of(ModBlocks.SAFE_BLOCK.get())));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

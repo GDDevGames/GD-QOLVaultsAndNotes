@@ -27,8 +27,8 @@ public class BulletinBoardBlockEntity extends BlockEntity implements Container {
         if (level != null) {
             BlockState state = level.getBlockState(worldPosition);
             boolean hasItems = hasItems();
-            if (state.getValue(CreateBlock.ACTIVATED) != hasItems) {
-                level.setBlock(worldPosition, state.setValue(CreateBlock.ACTIVATED, hasItems), 3);
+            if (state.getValue(BulletinBoardBlock.ACTIVATED) != hasItems) {
+                level.setBlock(worldPosition, state.setValue(BulletinBoardBlock.ACTIVATED, hasItems), 3);
             }
         }
     }

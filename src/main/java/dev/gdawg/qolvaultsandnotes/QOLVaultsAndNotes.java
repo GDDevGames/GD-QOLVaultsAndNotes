@@ -3,8 +3,9 @@ package dev.gdawg.qolvaultsandnotes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.minecraft.world.item.CreativeModeTabs;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QOLVaultsAndNotes.MODID)
 public class QOLVaultsAndNotes {
     public static final String MODID = "qolvaultsandnotes";
@@ -14,5 +15,14 @@ public class QOLVaultsAndNotes {
         ModItems.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModBlockEntities.register(modEventBus);
+
+        modEventBus.addListener(this::addCreative);
+    }
+
+    private void addCreative(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+            event.accept(ModItems.BULLETIN_BOARD_ITEM.get());
+            event.accept(ModItems.SAFE_ITEM.get());
+        }
     }
 }
