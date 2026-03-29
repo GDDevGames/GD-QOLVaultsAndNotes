@@ -17,6 +17,10 @@ public class ModBlocks {
             id -> new BulletinBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<SafeBlock> SAFE_BLOCK = BLOCKS.register("safe",
             id -> new SafeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).noOcclusion().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
+    public static final DeferredBlock<VaultBlock> VAULT_BLOCK = BLOCKS.register("vault",
+            id -> new VaultBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().setId(ResourceKey.create(Registries.BLOCK, id))));
+    public static final DeferredBlock<VaultPartBlock> VAULT_PART_BLOCK = BLOCKS.register("vault_part",
+            id -> new VaultPartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().setId(ResourceKey.create(Registries.BLOCK, id))));
 
     // .setId just has to do with setting a block id for a block, since apparently since of 1.21 and further forward, they added so you have to manually add that stuff
     // ExampleBlock is a new class or whatever made because registerSimpleBlock is not that functionally useful, instead it was just better to remake the whole thing into it's own register

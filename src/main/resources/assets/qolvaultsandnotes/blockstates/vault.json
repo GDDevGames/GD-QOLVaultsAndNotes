@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "qolvaultsandnotes:block/vault"},
+    "facing=south": { "model": "qolvaultsandnotes:block/vault"},
+    "facing=east":  { "model": "qolvaultsandnotes:block/vault"},
+    "facing=west":  { "model": "qolvaultsandnotes:block/vault"}
+  }
+}

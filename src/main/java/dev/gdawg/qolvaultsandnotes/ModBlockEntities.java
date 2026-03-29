@@ -20,6 +20,10 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("safe", () ->
                     new BlockEntityType<>(SafeBlockEntity::new, Set.of(ModBlocks.SAFE_BLOCK.get())));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VaultBlockEntity>> VAULT_ENTITY =
+            BLOCK_ENTITIES.register("vault", () ->
+                    new BlockEntityType<>(VaultBlockEntity::new, Set.of(ModBlocks.VAULT_BLOCK.get())));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }
