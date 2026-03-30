@@ -1,6 +1,7 @@
 {
 	"format_version": "1.21.11",
 	"credit": "Made with Blockbench",
+	"ambientocclusion": true,
 	"texture_size": [128, 128],
 	"textures": {
 		"0": "qolvaultsandnotes:block/vault",

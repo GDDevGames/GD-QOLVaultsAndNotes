@@ -8,21 +8,36 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 public class VaultBlockEntityRenderer
         implements BlockEntityRenderer<VaultBlockEntity, VaultBlockEntityRenderState> {
 
+    private final BlockRenderDispatcher blockRenderDispatcher;
+
     public VaultBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+        this.blockRenderDispatcher = context.blockRenderDispatcher();
     }
 
     @Override
     public VaultBlockEntityRenderState createRenderState() {
         return new VaultBlockEntityRenderState();
+    }
+
+    @Override
+    public AABB getRenderBoundingBox(VaultBlockEntity blockEntity) {
+        BlockPos pos = blockEntity.getBlockPos();
+        return new AABB(pos.getX(), pos.getY(), pos.getZ(),
+                pos.getX() + 2, pos.getY() + 2, pos.getZ() + 2);
     }
 
     @Override
@@ -61,9 +76,11 @@ public class VaultBlockEntityRenderer
         pose.mulPose(Axis.YP.rotationDegrees(yRot));
         pose.translate(-0.5, 0.0, -0.5);
 
-        collector.submitBlock(
+        collector.submitBlockModel(
                 pose,
-                renderState.blockState,
+                RenderTypes.entitySolid(TextureAtlas.LOCATION_BLOCKS),
+                blockRenderDispatcher.getBlockModel(renderState.blockState),
+                1.0f, 1.0f, 1.0f,
                 renderState.lightCoords,
                 OverlayTexture.NO_OVERLAY,
                 0
