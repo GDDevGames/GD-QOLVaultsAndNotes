@@ -15,7 +15,6 @@ public class QOLVaultsAndNotes {
         ModItems.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModBlockEntities.register(modEventBus);
-
         modEventBus.addListener(this::addCreative);
     }
 
@@ -23,6 +22,9 @@ public class QOLVaultsAndNotes {
         if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
             event.accept(ModItems.BULLETIN_BOARD_ITEM.get());
             event.accept(ModItems.SAFE_ITEM.get());
+            event.accept(ModItems.LOCK_ITEM.get());
+            event.accept(ModItems.KEY_ITEM.get());
+            event.accept(ModItems.KEYCARD_ITEM.get());
         }
     }
 }
