@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "N": "minecraft:iron_nugget",
+    "S": "minecraft:shelf"
+  },
+  "pattern": [
+    "INI",
+    "NSN",
+    "INI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "qolvaultsandnotes:bulletin_board"
+  }
+}

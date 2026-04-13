@@ -2,11 +2,11 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "A": {"item": "minecraft:gold_ingot"}
+    "G": "minecraft:gold_ingot"
   },
   "pattern": [
-    "AAA",
-    "A  "
+    "GGG",
+    "G  "
   ],
   "result": {
     "count": 1,

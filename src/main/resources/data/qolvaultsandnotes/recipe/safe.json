@@ -2,8 +2,9 @@
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "G": "minecraft:gold_ingot",
-    "I": "minecraft:iron_nugget"
+    "I": "minecraft:iron_ingot",
+    "B": "minecraft:iron_block",
+    "C": "minecraft:chest"
   },
   "pattern": [
     "GG ",

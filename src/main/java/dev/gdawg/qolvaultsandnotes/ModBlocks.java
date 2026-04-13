@@ -14,20 +14,20 @@ public class ModBlocks {
 
     // Creates a new Block with the id "examplemod:example_block", combining the namespace and path
     public static final DeferredBlock<BulletinBoardBlock> BULLETIN_BOARD_BLOCK = BLOCKS.register("bulletin_board",
-            id -> new BulletinBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
+            id -> new BulletinBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().strength(2f, 6f).requiresCorrectToolForDrops().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<SafeBlock> SAFE_BLOCK = BLOCKS.register("safe",
-            id -> new SafeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).noOcclusion().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
+            id -> new SafeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<VaultBlock> VAULT_BLOCK = BLOCKS.register("vault",
-            id -> new VaultBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().setId(ResourceKey.create(Registries.BLOCK, id))));
+            id -> new VaultBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<VaultPartBlock> VAULT_PART_BLOCK = BLOCKS.register("vault_part",
-            id -> new VaultPartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().setId(ResourceKey.create(Registries.BLOCK, id))));
+            id -> new VaultPartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().setId(ResourceKey.create(Registries.BLOCK, id))));
 
     // .setId just has to do with setting a block id for a block, since apparently since of 1.21 and further forward, they added so you have to manually add that stuff
     // ExampleBlock is a new class or whatever made because registerSimpleBlock is not that functionally useful, instead it was just better to remake the whole thing into it's own register
     // ExampleBlock was also made in order to give the correct hitbox to the block when placed
     // MapColor.whatever means what colour/block the block is when placed in the world and viewed on a map, pretty much no use
     // .noOcclusion removes that weird seeing through the world issue you get when you make the model for a block smaller than the default size for a block
-    // BlockBehaviour and such creates a blank thinga majig that you then add stuff into, like mapcolor, no occlusion, setid, and whatever else you might possibly add. Configuring the block manually pretty much
+    // BlockBehaviour and such creates a blank thingamajig that you then add stuff into, like mapcolor, no occlusion, setid, and whatever else you might possibly add. Configuring the block manually pretty much
     // "useful shortcuts" ctrl + alt + o removes all unecessary imports, ones that aren't being used
     // alt + enter when clicked on an error thing, if it is missing an import, it will say something about a missing class, then it will automatically put the import in the file
     // config.java was completely removed since it only served a purpose with logging and stuff, same with code that had to do with logging got removed cus it isn't needed
