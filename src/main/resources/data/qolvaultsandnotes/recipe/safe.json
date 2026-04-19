@@ -7,12 +7,12 @@
     "C": "minecraft:chest"
   },
   "pattern": [
-    "GG ",
-    "II ",
-    "II "
+    "III",
+    "ICI",
+    "BBB"
   ],
   "result": {
     "count": 1,
-    "id": "qolvaultsandnotes:lock"
+    "id": "qolvaultsandnotes:safe"
   }
 }

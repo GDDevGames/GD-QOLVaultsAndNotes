@@ -6,5 +6,7 @@
   "item.qolvaultsandnotes.safe": "Safe",
   "item.qolvaultsandnotes.lock": "Lock",
   "item.qolvaultsandnotes.key": "Key",
-  "item.qolvaultsandnotes.keycard": "Keycard"
+  "item.qolvaultsandnotes.keycard": "Keycard",
+  "container.qolvaultsandnotes.vault": "Vault",
+  "screen.qolvaultsandnotes.safe_code": "Enter Code"
 }

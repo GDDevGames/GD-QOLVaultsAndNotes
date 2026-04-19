@@ -6,12 +6,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -25,6 +27,9 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class VaultBlock extends BaseEntityBlock {
 
@@ -58,21 +63,32 @@ public class VaultBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!(level instanceof ServerLevel)) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level,
+                                               BlockPos pos, Player player, BlockHitResult hit) {
+        if (!(level instanceof ServerLevel serverLevel)) {
             return InteractionResult.CONSUME;
         }
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof VaultBlockEntity blockEntity) {
             player.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x6, id, inventory, blockEntity, 6),
-                    Component.literal("Vault")
-            ));
+                    (id, inventory, p) -> new VaultMenu(id, inventory, blockEntity),
+                    Component.translatable("container.qolvaultsandnotes.vault")
+            ), pos);
+
+            // Send full inventory to the client NOW, after the menu is open
+            List<ItemStack> allItems = new ArrayList<>();
+            for (int i = 0; i < VaultBlockEntity.SIZE; i++) {
+                allItems.add(blockEntity.getItem(i).copy());
+            }
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                    (ServerPlayer) player,
+                    new VaultFullSyncPacket(allItems)
+            );
         }
         return InteractionResult.SUCCESS;
     }
 
-    @Override
+    /*@Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide()) {
             // Drop all vault contents at the origin position
@@ -84,15 +100,28 @@ public class VaultBlock extends BaseEntityBlock {
             MultiblockDetector.breakVault(level, pos);
         }
         return super.playerWillDestroy(level, pos, state, player);
+    }*/
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide()) {
+            MultiblockDetector.breakVault(level, pos, pos);
+        }
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     public void openFor(Level level, BlockPos pos, Player player) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof VaultBlockEntity blockEntity) {
+        /*if (be instanceof VaultBlockEntity blockEntity) {
             player.openMenu(new SimpleMenuProvider(
                     (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x6, id, inventory, blockEntity, 6),
                     Component.literal("Vault")
             ));
+        }*/
+        if (be instanceof VaultBlockEntity blockEntity) {
+            player.openMenu(new SimpleMenuProvider(
+                    (id, inventory, p) -> new VaultMenu(id, inventory, blockEntity),
+                    Component.translatable("container.qolvaultsandnotes.vault") //Component.translatable lets you grab from the lang/ files with translations. important
+            ), pos);
         }
     }
 

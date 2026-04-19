@@ -11,7 +11,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 public class BulletinBoardBlockEntity extends BlockEntity implements Container {
-    private final NonNullList<ItemStack> items = NonNullList.withSize(18, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
 
     public BulletinBoardBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BULLETIN_BOARD_ENTITY.get(), pos, state);

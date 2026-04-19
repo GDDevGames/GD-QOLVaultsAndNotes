@@ -4,7 +4,7 @@
   "key": {
     "I": "minecraft:iron_ingot",
     "N": "minecraft:iron_nugget",
-    "S": "minecraft:shelf"
+    "S": "#minecraft:wooden_shelves"
   },
   "pattern": [
     "INI",

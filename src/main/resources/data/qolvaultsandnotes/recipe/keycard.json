@@ -5,7 +5,7 @@
     "Q": "minecraft:quartz",
     "R": "minecraft:redstone",
     "C": "minecraft:comparator",
-    "A": "minecraft:amethyst"
+    "A": "minecraft:amethyst_shard"
   },
   "pattern": [
     "RCA",

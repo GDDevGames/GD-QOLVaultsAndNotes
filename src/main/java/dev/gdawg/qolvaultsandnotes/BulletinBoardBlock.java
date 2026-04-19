@@ -60,11 +60,16 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
         }
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof BulletinBoardBlockEntity blockEntity) {
-            player.openMenu(new SimpleMenuProvider(
+            /*player.openMenu(new SimpleMenuProvider(
                     (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, blockEntity, 2),
                     Component.literal("Bulletin Board")
-            ));
+            ));*/
+            player.openMenu(new SimpleMenuProvider(
+                    (id, inventory, p) -> new BulletinBoardMenu(id, inventory, blockEntity),
+                    Component.literal("")
+            ), pos);
         }
+
         return InteractionResult.SUCCESS;
     }
 

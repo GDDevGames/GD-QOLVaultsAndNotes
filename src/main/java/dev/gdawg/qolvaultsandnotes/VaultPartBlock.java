@@ -50,13 +50,7 @@ public class VaultPartBlock extends Block {
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide()) {
             BlockPos origin = getOrigin(pos, state);
-            BlockState masterState = level.getBlockState(origin);
-
-            if (masterState.is(ModBlocks.VAULT_BLOCK.get())) {
-                masterState.getBlock().playerWillDestroy(level, origin, masterState, player);
-            } else {
-                MultiblockDetector.breakVault(level, origin);
-            }
+            MultiblockDetector.breakVault(level, origin, pos);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
