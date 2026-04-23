@@ -1,3 +1,6 @@
+/// ----- VaultScreen -----
+/// GUI for the scrollable vault.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -11,9 +14,9 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
     private static final Identifier GUI_TEXTURE = Identifier.fromNamespaceAndPath(
-            QOLVaultsAndNotes.MODID, "textures/gui/container/vault.png");
+        QOLVaultsAndNotes.MODID, "textures/gui/container/vault.png");
 
-    // Scrollbar pixel coords from your GUI image
+    // Pixel coords
     private static final int SCROLLBAR_LEFT = 174;
     private static final int SCROLLBAR_TOP = 18;
     private static final int SCROLLBAR_RIGHT = 186;
@@ -21,7 +24,7 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
     private static final int SCROLLBAR_WIDTH = SCROLLBAR_RIGHT - SCROLLBAR_LEFT;   // 13
     private static final int SCROLLBAR_HEIGHT = SCROLLBAR_BOTTOM - SCROLLBAR_TOP;  // 107
 
-    // Total scrollable rows = 8 total - 6 visible = 2
+    // Total scrollable rows: 8 total - 6 visible = 2
     private static final int SCROLLABLE_ROWS = 2;
 
     private float scrollOffset = 0.0f;
@@ -32,27 +35,26 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
         this.imageWidth = 194;
         this.imageHeight = 222;
         this.inventoryLabelX = 8;
-        this.inventoryLabelY = imageHeight - 94; //important to change manually because the default is for smaller containerscreens
+        this.inventoryLabelY = imageHeight - 94; // Daniel: important to change manually because the default is for smaller screens
     }
 
     @Override
     protected void init() {
         super.init();
-        // Position slots for initial scroll = 0
         this.menu.scrollTo(0);
     }
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
-                GUI_TEXTURE,
-                this.leftPos,
-                this.topPos,
-                0.0F, 0.0F,
-                this.imageWidth,
-                this.imageHeight,
-                256, 256
+            RenderPipelines.GUI_TEXTURED,
+            GUI_TEXTURE,
+            this.leftPos,
+            this.topPos,
+            0.0F, 0.0F,
+            this.imageWidth,
+            this.imageHeight,
+            256, 256
         );
 
         // Draw scrollbar knob
@@ -60,14 +62,14 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
         int scrollbarTrackHeight = SCROLLBAR_HEIGHT; // total track pixels
         int knobHeight = 15; // height of the knob in pixels
         int knobY = this.topPos + SCROLLBAR_TOP + (int)(scrollOffset * (scrollbarTrackHeight - knobHeight));
-        //guiGraphics.fill(scrollbarX, knobY, scrollbarX + SCROLLBAR_WIDTH, knobY + knobHeight, 0xFF888888);
+        // guiGraphics.fill(scrollbarX, knobY, scrollbarX + SCROLLBAR_WIDTH, knobY + knobHeight, 0xFF888888); Debug color
         guiGraphics.blitSprite(
-                RenderPipelines.GUI_TEXTURED,
-                Identifier.withDefaultNamespace("container/creative_inventory/scroller"), //maybe make it into a variable up top? static?
-                scrollbarX,
-                knobY,
-                SCROLLBAR_WIDTH,
-                15
+            RenderPipelines.GUI_TEXTURED,
+            Identifier.withDefaultNamespace("container/creative_inventory/scroller"), // Daniel: maybe make it into a variable up top? static?
+            scrollbarX,
+            knobY,
+            SCROLLBAR_WIDTH,
+            15
         );
     }
 
@@ -118,7 +120,6 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
     private void applyScroll() {
         int rowOffset = Math.round(scrollOffset * 2);
         this.menu.scrollTo(rowOffset);
-        // Send to server
         ClientPacketDistributor.sendToServer(new VaultScrollPacket(rowOffset));
     }
 
@@ -126,7 +127,7 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
         int x = this.leftPos + SCROLLBAR_LEFT;
         int y = this.topPos + SCROLLBAR_TOP;
         return mouseX >= x && mouseX <= x + SCROLLBAR_WIDTH
-                && mouseY >= y && mouseY <= y + SCROLLBAR_HEIGHT;
+            && mouseY >= y && mouseY <= y + SCROLLBAR_HEIGHT;
     }
 
     @Override
@@ -134,5 +135,4 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
         guiGraphics.drawString(this.font, this.title, 8, 6, -12566464, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, -12566464, false);
     }
-
 }

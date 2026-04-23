@@ -1,3 +1,6 @@
+/// ----- ModBlockEntities -----
+/// Registers the new block entities for the game to recognize.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -10,20 +13,21 @@ import java.util.Set;
 
 public class ModBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
-            DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, QOLVaultsAndNotes.MODID);
+        DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, QOLVaultsAndNotes.MODID);
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BulletinBoardBlockEntity>> BULLETIN_BOARD_ENTITY =
-            BLOCK_ENTITIES.register("bulletin_board", () ->
-                    new BlockEntityType<>(BulletinBoardBlockEntity::new, Set.of(ModBlocks.BULLETIN_BOARD_BLOCK.get())));
+        BLOCK_ENTITIES.register("bulletin_board", () ->
+            new BlockEntityType<>(BulletinBoardBlockEntity::new, Set.of(ModBlocks.BULLETIN_BOARD_BLOCK.get())));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafeBlockEntity>> SAFE_ENTITY =
-            BLOCK_ENTITIES.register("safe", () ->
-                    new BlockEntityType<>(SafeBlockEntity::new, Set.of(ModBlocks.SAFE_BLOCK.get())));
+        BLOCK_ENTITIES.register("safe", () ->
+            new BlockEntityType<>(SafeBlockEntity::new, Set.of(ModBlocks.SAFE_BLOCK.get())));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VaultBlockEntity>> VAULT_ENTITY =
-            BLOCK_ENTITIES.register("vault", () ->
-                    new BlockEntityType<>(VaultBlockEntity::new, Set.of(ModBlocks.VAULT_BLOCK.get())));
+        BLOCK_ENTITIES.register("vault", () ->
+            new BlockEntityType<>(VaultBlockEntity::new, Set.of(ModBlocks.VAULT_BLOCK.get())));
 
+    // Send the new entities to the event bus
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

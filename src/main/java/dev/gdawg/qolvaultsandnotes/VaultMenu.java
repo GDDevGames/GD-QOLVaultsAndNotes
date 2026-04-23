@@ -1,8 +1,10 @@
+/// ----- VaultMenu -----
+/// Creates the menu for displaying the items in the vault.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -14,7 +16,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 public class VaultMenu extends AbstractContainerMenu {
-
     public final VaultBlockEntity blockEntity;
     private static final int VAULT_ROWS = 8;
     private static final int VAULT_COLS = 9;
@@ -23,11 +24,9 @@ public class VaultMenu extends AbstractContainerMenu {
     public static final int TOTAL_SLOTS = VAULT_ROWS * VAULT_COLS;    // 72
     public static final int SLOT_START_X = 8;
     public static final int SLOT_START_Y = 18;
-
     private int currentRowOffset = 0;
 
-    private final NonNullList<ItemStack> clientItems =
-            NonNullList.withSize(TOTAL_SLOTS, ItemStack.EMPTY);
+    private final NonNullList<ItemStack> clientItems = NonNullList.withSize(TOTAL_SLOTS, ItemStack.EMPTY);
 
     // Custom slot that redirects to a mutable vault index
     public class VaultSlot extends Slot {
@@ -36,8 +35,9 @@ public class VaultMenu extends AbstractContainerMenu {
 
         public VaultSlot(int visibleRow, int col) {
             super(blockEntity, visibleRow * VAULT_COLS + col,
-                    SLOT_START_X + col * 18,
-                    SLOT_START_Y + visibleRow * 18);
+                SLOT_START_X + col * 18,
+                SLOT_START_Y + visibleRow * 18
+            );
             this.vaultIndex = visibleRow * VAULT_COLS + col;
         }
 
@@ -52,14 +52,12 @@ public class VaultMenu extends AbstractContainerMenu {
         @Override
         public ItemStack getItem() {
             // On the client, use the cached item so the display is always correct.
-            // On the server, go straight to the block entity.
+            // On the server, go straight to the block entity
             if (net.minecraft.client.Minecraft.getInstance().level != null) {
                 return clientItem;
             }
             return blockEntity.getItem(vaultIndex);
         }
-
-        // ... rest of VaultSlot unchanged
     }
 
     public VaultMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {
@@ -87,7 +85,8 @@ public class VaultMenu extends AbstractContainerMenu {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
                 this.addSlot(new Slot(playerInventory, j + i * 9 + 9,
-                        SLOT_START_X + j * 18, 140 + i * 18));
+                    SLOT_START_X + j * 18, 140 + i * 18)
+                );
             }
         }
     }
@@ -95,11 +94,12 @@ public class VaultMenu extends AbstractContainerMenu {
     private void addPlayerHotbar(Inventory playerInventory) {
         for (int i = 0; i < 9; i++) {
             this.addSlot(new Slot(playerInventory, i,
-                    SLOT_START_X + i * 18, 198));
+                SLOT_START_X + i * 18, 198)
+            );
         }
     }
 
-    // rowOffset: 0 = show rows 0-5, 1 = show rows 1-6, 2 = show rows 2-7
+    // Daniel: rowOffset: 0 = show rows 0-5, 1 = show rows 1-6, 2 = show rows 2-7
     public void scrollTo(int rowOffset) {
         this.currentRowOffset = rowOffset;
         for (int row = 0; row < VISIBLE_ROWS; row++) {
@@ -123,7 +123,8 @@ public class VaultMenu extends AbstractContainerMenu {
                 if (!this.moveItemStackTo(itemstack1, VISIBLE_SLOTS, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else {
+            }
+            else {
                 // From player to vault
                 if (!this.moveItemStackTo(itemstack1, 0, VISIBLE_SLOTS, false)) {
                     return ItemStack.EMPTY;
@@ -131,7 +132,8 @@ public class VaultMenu extends AbstractContainerMenu {
             }
             if (itemstack1.isEmpty()) {
                 slot.setByPlayer(ItemStack.EMPTY);
-            } else {
+            }
+            else {
                 slot.setChanged();
             }
         }
@@ -143,10 +145,7 @@ public class VaultMenu extends AbstractContainerMenu {
         return true;
     }
 
-    /**
-     * Called on the CLIENT when the full-sync packet is received.
-     * Stores all 72 items locally, then refreshes visible slots.
-     */
+    // Fully syncs all 72 items for the client when the corresponding packet is received
     public void applyFullSync(List<ItemStack> items) {
         for (int i = 0; i < Math.min(items.size(), TOTAL_SLOTS); i++) {
             clientItems.set(i, items.get(i).copy());
@@ -154,10 +153,7 @@ public class VaultMenu extends AbstractContainerMenu {
         refreshVisibleSlotsFromClientCache();
     }
 
-    /**
-     * Pushes the correct window of items from the client cache into
-     * the 54 visible slots so the renderer sees the right items.
-     */
+    // Ensures the renderer sees the correct items in the 54 visible slots via the client's cache
     public void refreshVisibleSlotsFromClientCache() {
         for (int row = 0; row < VISIBLE_ROWS; row++) {
             for (int col = 0; col < VAULT_COLS; col++) {

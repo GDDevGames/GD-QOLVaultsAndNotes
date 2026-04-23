@@ -1,3 +1,6 @@
+/// ----- ClientSetup -----
+/// Ensures the vault block is rendered correctly in the world.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.neoforged.api.distmarker.Dist;
@@ -11,8 +14,8 @@ public class ClientSetup {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(
-                ModBlockEntities.VAULT_ENTITY.get(),
-                VaultBlockEntityRenderer::new
+            ModBlockEntities.VAULT_ENTITY.get(),
+            VaultBlockEntityRenderer::new
         );
     }
 }

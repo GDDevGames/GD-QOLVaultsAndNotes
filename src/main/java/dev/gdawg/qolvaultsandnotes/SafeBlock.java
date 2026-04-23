@@ -1,15 +1,13 @@
 package dev.gdawg.qolvaultsandnotes;
 
 import com.mojang.serialization.MapCodec;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -23,8 +21,6 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -33,6 +29,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 public class SafeBlock extends BaseEntityBlock {
@@ -63,33 +60,10 @@ public class SafeBlock extends BaseEntityBlock {
     }
 
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide()
-                ? createTickerHelper(type, ModBlockEntities.SAFE_ENTITY.get(), SafeBlockEntity::lidAnimateTick)
-                : null;
-    }
-
-    @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState()
                 .setValue(FACING, context.getHorizontalDirection().getOpposite())
                 .setValue(ACTIVATED, false);
-    }
-
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!(level instanceof ServerLevel)) {
-            return InteractionResult.CONSUME;
-        }
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof SafeBlockEntity blockEntity) {
-            player.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, blockEntity, 2),
-                    Component.literal("Safe")
-            ));
-            level.setBlock(pos, state.setValue(ACTIVATED, true), 3);
-        }
-        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -100,24 +74,32 @@ public class SafeBlock extends BaseEntityBlock {
         ItemStack heldItem = player.getItemInHand(hand);
 
         if (heldItem.is(ModItems.KEY_ITEM.get())) {
-            if (!heldItem.has(DataComponents.CUSTOM_NAME)) return InteractionResult.PASS;
+            if (!heldItem.has(DataComponents.CUSTOM_NAME)) return InteractionResult.PASS;  // ← checks name exists
+            String code = heldItem.get(DataComponents.CUSTOM_NAME).getString();             // ← reads the name
 
-            String code = heldItem.get(DataComponents.CUSTOM_NAME).getString();
-
-            // Key = numeric only, max 18 characters
-            if (!code.matches("\\d+") || code.length() > 18) {
+            if (!code.matches("[.\\-]+") || code.length() > 18) {
                 player.displayClientMessage(
-                        Component.literal("Key code must be numeric, max 18 digits."), true);
+                        Component.literal("Key code must only contain . and -, max 18 characters."), true);
                 return InteractionResult.PASS;
             }
 
             if (!level.isClientSide()) {
                 SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
-                be.setAssignedCode(code);
-                be.setLockedWithKeycard(false); // key = pincode screen
-                be.setChanged();
-                heldItem.shrink(1);
-                player.displayClientMessage(Component.literal("Code assigned."), true);
+                if (be != null) {
+                    if (!be.isLocked()) {
+                        player.displayClientMessage(Component.literal("Use a lock first."), true);
+                        return InteractionResult.PASS;
+                    }
+                    if (!be.getAssignedCode().isEmpty()) {
+                        player.displayClientMessage(Component.literal("A code is already assigned."), true);
+                        return InteractionResult.PASS;
+                    }
+                    be.setAssignedCode(code);
+                    be.setLockedWithKeycard(false);
+                    be.setChanged();
+                    heldItem.shrink(1);
+                    player.displayClientMessage(Component.literal("Code assigned."), true);
+                }
             }
             return InteractionResult.SUCCESS;
 
@@ -126,34 +108,84 @@ public class SafeBlock extends BaseEntityBlock {
 
             String code = heldItem.get(DataComponents.CUSTOM_NAME).getString();
 
-            // Keycard = any characters, no length limit
             if (code.isBlank()) return InteractionResult.PASS;
 
             if (!level.isClientSide()) {
                 SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
-                be.setAssignedCode(code);
-                be.setLockedWithKeycard(true); // keycard = serial screen
-                be.setChanged();
-                heldItem.shrink(1);
-                player.displayClientMessage(Component.literal("Code assigned."), true);
+                if (be != null) {
+                    if (!be.isLocked()) {
+                        player.displayClientMessage(Component.literal("Use a lock first."), true);
+                        return InteractionResult.PASS;
+                    }
+                    if (!be.getAssignedCode().isEmpty()) {
+                        player.displayClientMessage(Component.literal("A code is already assigned."), true);
+                        return InteractionResult.PASS;
+                    }
+                    be.setAssignedCode(code);
+                    be.setLockedWithKeycard(true);
+                    be.setChanged();
+                    heldItem.shrink(1);
+                    player.displayClientMessage(Component.literal("Code assigned."), true);
+                }
             }
             return InteractionResult.SUCCESS;
 
-        } else {
-            // Not holding key/keycard — open the code entry screen or inventory
+        } else if (heldItem.is(ModItems.LOCK_ITEM.get())) {
             if (!level.isClientSide()) {
                 SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
-                if (be != null && !be.getAssignedCode().isEmpty()) {
-                    // Has a code set — open the appropriate PIN screen
-                    // We send a packet to the client to open it, or handle via openMenu
-                } else {
-                    // No code set — open inventory directly
-                    player.openMenu((MenuProvider) level.getBlockEntity(pos));
+                if (be != null) {
+                    if (be.isLocked()) {
+                        player.displayClientMessage(Component.literal("Already locked."), true);
+                        return InteractionResult.PASS;
+                    }
+                    be.setLocked(true);
+                    be.setLockOwner(player.getUUID());
+                    be.setChanged();
+                    heldItem.shrink(1);
+                    player.displayClientMessage(Component.literal("Safe locked."), true);
                 }
             }
             return InteractionResult.SUCCESS;
         }
+
+        // Anything else — fall through to useWithoutItem
+        return useWithoutItem(state, level, pos, player, hit);
     }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level,
+                                               BlockPos pos, Player player,
+                                               BlockHitResult hit) {
+        if (level.isClientSide()) return InteractionResult.CONSUME;
+
+        SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
+        if (be == null) return InteractionResult.PASS;
+
+        // Lock check — only the owner can open
+        if (be.isLocked()) {
+            if (!player.getUUID().equals(be.getLockOwner())) {
+                player.displayClientMessage(Component.literal("This safe is locked."), true);
+                return InteractionResult.SUCCESS;
+            }
+        }
+
+        // Code check — open the appropriate screen
+        if (!be.getAssignedCode().isEmpty()) {
+            PacketDistributor.sendToPlayer(
+                    (ServerPlayer) player,
+                    new OpenSafeScreenPacket(pos, be.isLockedWithKeycard())
+            );
+            return InteractionResult.SUCCESS;
+        }
+
+        // Nothing assigned — open inventory directly
+        player.openMenu(new SimpleMenuProvider(
+                (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, be, 2),
+                Component.translatable("container.qolvaultsandnotes.safe")
+        ));
+        return InteractionResult.SUCCESS;
+    }
+
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING, ACTIVATED);

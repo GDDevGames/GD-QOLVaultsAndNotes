@@ -1,3 +1,6 @@
+/// ----- BulletinBoardBlockEntity -----
+/// Handles block entity functions and events for the bulletin board.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
@@ -78,6 +81,7 @@ public class BulletinBoardBlockEntity extends BlockEntity implements Container {
         items.clear();
     }
 
+    // Save note data in an output and pass it on
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
@@ -88,6 +92,7 @@ public class BulletinBoardBlockEntity extends BlockEntity implements Container {
         }
     }
 
+    // Load note data and pass it to an internal variable
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);

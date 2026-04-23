@@ -1,3 +1,6 @@
+/// ----- VaultBlockEntityRenderer -----
+/// Handles the custom rendering code needed for the vault.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -13,59 +16,47 @@ import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
-public class VaultBlockEntityRenderer
-        implements BlockEntityRenderer<VaultBlockEntity, VaultBlockEntityRenderState> {
-
+public class VaultBlockEntityRenderer implements BlockEntityRenderer<VaultBlockEntity, VaultBlockEntityRenderState> {
     private final BlockRenderDispatcher blockRenderDispatcher;
 
     public VaultBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
         this.blockRenderDispatcher = context.blockRenderDispatcher();
     }
 
+    // We need to make a new RenderState by making a new one, write the existing state into the new one, modify it and send it back
     @Override
     public VaultBlockEntityRenderState createRenderState() {
         return new VaultBlockEntityRenderState();
     }
 
+    // Scale up the bounding box
     @Override
     public AABB getRenderBoundingBox(VaultBlockEntity blockEntity) {
         BlockPos pos = blockEntity.getBlockPos();
-        return new AABB(pos.getX(), pos.getY(), pos.getZ(),
-                pos.getX() + 2, pos.getY() + 2, pos.getZ() + 2);
+        return new AABB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 2, pos.getY() + 2, pos.getZ() + 2);
     }
 
+    // Get the current RenderState for use later
     @Override
-    public void extractRenderState(VaultBlockEntity blockEntity,
-                                   VaultBlockEntityRenderState renderState,
-                                   float partialTick,
-                                   Vec3 cameraPos,
-                                   ModelFeatureRenderer.@Nullable CrumblingOverlay crumblingOverlay) {
+    public void extractRenderState(VaultBlockEntity blockEntity, VaultBlockEntityRenderState renderState, float partialTick, Vec3 cameraPos, ModelFeatureRenderer.@Nullable CrumblingOverlay crumblingOverlay) {
         BlockEntityRenderState.extractBase(blockEntity, renderState, crumblingOverlay);
-        renderState.facing = blockEntity.getBlockState()
-                .getValue(BlockStateProperties.HORIZONTAL_FACING);
+        renderState.facing = blockEntity.getBlockState().getValue(BlockStateProperties.HORIZONTAL_FACING);
     }
 
-
-
+    // Send the corrected model to the render stack
     @Override
-    public void submit(VaultBlockEntityRenderState renderState,
-                       PoseStack pose,
-                       SubmitNodeCollector collector,
-                       CameraRenderState cameraState) {
-
+    public void submit(VaultBlockEntityRenderState renderState, PoseStack pose, SubmitNodeCollector collector, CameraRenderState cameraState) {
         float yRot = switch (renderState.facing) {
             case SOUTH -> 0f;
             case EAST  -> 90f;
             case WEST  -> 270f;
             default    -> 180f; // NORTH
         };
-
         pose.pushPose();
 
         // Scale up to 2x2x2 blocks
@@ -76,14 +67,15 @@ public class VaultBlockEntityRenderer
         pose.mulPose(Axis.YP.rotationDegrees(yRot));
         pose.translate(-0.5, 0.0, -0.5);
 
+        // Send it over
         collector.submitBlockModel(
-                pose,
-                RenderTypes.entitySolid(TextureAtlas.LOCATION_BLOCKS),
-                blockRenderDispatcher.getBlockModel(renderState.blockState),
-                1.0f, 1.0f, 1.0f,
-                renderState.lightCoords,
-                OverlayTexture.NO_OVERLAY,
-                0
+            pose,
+            RenderTypes.entitySolid(TextureAtlas.LOCATION_BLOCKS),
+            blockRenderDispatcher.getBlockModel(renderState.blockState),
+            1.0f, 1.0f, 1.0f,
+            renderState.lightCoords,
+            OverlayTexture.NO_OVERLAY,
+            0
         );
 
         pose.popPose();

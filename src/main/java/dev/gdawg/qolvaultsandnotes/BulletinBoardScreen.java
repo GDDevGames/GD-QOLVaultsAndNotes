@@ -4,42 +4,26 @@
 //
 
 package dev.gdawg.qolvaultsandnotes;
-import com.google.common.collect.Lists;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.ScreenPosition;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.BeaconScreen;
 import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.AtlasManager;
-import net.minecraft.core.Holder;
-import net.minecraft.data.AtlasIds;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.BeaconMenu;
-import net.minecraft.world.inventory.ContainerListener;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.entity.BeaconBlockEntity;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
-import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMenu> {
     static final Identifier INK_SAC_SLOT_SPRITE = Identifier.withDefaultNamespace("ink_sac");
@@ -54,7 +38,8 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     static final Identifier BUTTON_SELECTED_SPRITE = Identifier.withDefaultNamespace("container/beacon/button_selected");
     static final Identifier BUTTON_HIGHLIGHTED_SPRITE = Identifier.withDefaultNamespace("container/beacon/button_highlighted");
     static final Identifier BUTTON_SPRITE = Identifier.withDefaultNamespace("container/beacon/button");
-    static final Identifier RECIPEBOOK_BUTTON_SPRITE = Identifier.withDefaultNamespace("sprites/recipe_book/button");
+    static final Identifier RECIPEBOOK_BUTTON_SPRITE = Identifier.withDefaultNamespace("recipe_book/button");
+    static final Identifier RECIPEBOOK_BUTTON_HIGHLIGHTED_SPRITE = Identifier.withDefaultNamespace("recipe_book/button_highlighted");
     static final Identifier TEXT_FIELD_SPRITE = Identifier.withDefaultNamespace("container/anvil/text_field");
     static final Identifier TEXT_FIELD_DISABLED_SPRITE = Identifier.withDefaultNamespace("container/anvil/text_field_disabled");
     static final Identifier MAIN_BULLETIN_BOARD_LOCATION = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/bulletin_board/main_panel.png");
@@ -74,6 +59,8 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     public boolean extendedMenu;
     private int menuStartX;
     private int menuStartY;
+    private EditBox textBox;
+    private BulletinBoardBlockEntity be;
 
     public BulletinBoardScreen(BulletinBoardMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -82,6 +69,7 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         this.imageHeight = 128;
         menuStartX = (this.width - this.imageWidth) / 2;
         menuStartY = (this.height - this.imageHeight) / 2;
+        be = menu.blockEntity;
     }
 
     public void toggleExtendedMenu() {
@@ -106,6 +94,12 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     }
 
     @Override
+    public boolean keyPressed(KeyEvent keyEvent) {
+        textBox.keyPressed(keyEvent);
+        return super.keyPressed(keyEvent);
+    }
+
+    @Override
     protected void renderBg(GuiGraphics guiGraphics, float p_282132_, int p_283078_, int p_283647_) {
         if(extendedMenu) {
             int totalWidth = 256 + 128;
@@ -120,8 +114,25 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             guiGraphics.renderFakeItem(new ItemStack(Items.INK_SAC), menuStartX + 256 + 77, menuStartY + 130);
             guiGraphics.renderFakeItem(new ItemStack(Items.PAPER), menuStartX + 256 + 98, menuStartY + 130);
 
-            guiGraphics.renderItemDecorations(minecraft.font, new ItemStack(Items.INK_SAC), menuStartX + 256 + 77, menuStartY + 130, "0");
-            guiGraphics.renderItemDecorations(minecraft.font, new ItemStack(Items.PAPER), menuStartX + 256 + 98, menuStartY + 130, "0");
+            ItemStack inkSacs = be.getItem(0);
+            ItemStack papers = be.getItem(1);
+
+            if(inkSacs.getCount() > 0) {
+                guiGraphics.renderItemDecorations(minecraft.font, inkSacs, menuStartX + 256 + 77, menuStartY + 130);
+            } else guiGraphics.renderItemDecorations(minecraft.font, new ItemStack(Items.INK_SAC), menuStartX + 256 + 77, menuStartY + 130, "0");
+            if(papers.getCount() > 0) {
+                guiGraphics.renderItemDecorations(minecraft.font, papers, menuStartX + 256 + 98, menuStartY + 130);
+            } else guiGraphics.renderItemDecorations(minecraft.font, new ItemStack(Items.PAPER), menuStartX + 256 + 98, menuStartY + 130, "0");
+
+
+            guiGraphics.blitSprite(
+                    RenderPipelines.GUI_TEXTURED,
+                    true ? TEXT_FIELD_SPRITE : TEXT_FIELD_DISABLED_SPRITE,
+                    this.leftPos + 59,
+                    this.topPos + 20,
+                    110,
+                    16
+            );
 
         } else {
             menuStartX = (this.width - this.imageWidth) / 2;
@@ -141,17 +152,42 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         super.init();
         sidePanelButtons.clear();
 
+        textBox = new EditBox(this.font, leftPos + 59, topPos + 20, 103, 12, Component.translatable("container.repair"));
+        textBox.setCanLoseFocus(false);
+        textBox.setTextColor(-1);
+        textBox.setTextColorUneditable(-1);
+        textBox.setInvertHighlightedTextColor(false);
+        textBox.setBordered(false);
+        textBox.setMaxLength(50);
+        //textBox.setResponder(this::onNameChanged);
+        textBox.setValue("");
+        textBox.visible = false;
+
         BulletinBoardSpriteScreenButton screenButton = new BulletinBoardSpriteScreenButton(
-                this.leftPos + 230, this.topPos + 54, BUTTON_SPRITE, Component.literal("")
+                this.leftPos + 233, this.topPos + 54, RECIPEBOOK_BUTTON_SPRITE, Component.literal("")
         ){
             @Override
             public void onPress(InputWithModifiers input) {
                 toggleExtendedMenu();
+                setSelected(!isSelected());
+            }
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier identifier;
+                if (!this.active) {
+                    identifier = BulletinBoardScreen.BUTTON_DISABLED_SPRITE;
+                }
+                else if (this.isHoveredOrFocused()) {
+                    identifier = BulletinBoardScreen.RECIPEBOOK_BUTTON_HIGHLIGHTED_SPRITE;
+                } else {
+                    identifier = BulletinBoardScreen.RECIPEBOOK_BUTTON_SPRITE;
+                }
+
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, identifier, this.getX(), this.getY(), 20, 18);
+                this.renderIcon(guiGraphics);
             }
             @Override
             protected void renderIcon(GuiGraphics guiGraphics) {
-                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, RECIPEBOOK_BUTTON_SPRITE, this.getX() + 2, this.getY() + 2, 16, 16);
-                //guiGraphics.renderFakeItem(new ItemStack(Items.)
             }
         };
         toggleExtendedButton = screenButton;
@@ -159,21 +195,29 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
 
         addSidePanelButton(new BulletinBoardSpriteScreenButton(
                 0, 0,
-                BUTTON_SPRITE, Component.literal("Button A")
+                BUTTON_SPRITE, Component.literal("Unpin")
         ) {
             @Override
             public void onPress(InputWithModifiers input) {
                 // your action here
             }
+            @Override
+            protected void renderIcon(GuiGraphics guiGraphics) {
+                guiGraphics.renderFakeItem(new ItemStack(Items.COPPER_TORCH),this.getX() +2, this.getY());
+            }
         }, 11, 128);
 
         addSidePanelButton(new BulletinBoardSpriteScreenButton(
                 0, 0,
-                BUTTON_SPRITE, Component.literal("Button B")
+                BUTTON_SPRITE, Component.literal("Pin")
         ) {
             @Override
             public void onPress(InputWithModifiers input) {
                 // your action here
+            }
+            @Override
+            protected void renderIcon(GuiGraphics guiGraphics) {
+                guiGraphics.renderFakeItem(new ItemStack(Items.REDSTONE_TORCH),this.getX() + 2, this.getY());
             }
         }, 33, 128);
         updateSidePanelVisibility();
@@ -192,35 +236,28 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     private void updateSidePanelVisibility() {
         for (BulletinBoardScreenButton button : sidePanelButtons) {
             button.visible = extendedMenu;
+            textBox.visible = !textBox.visible;
         }
     }
 
     public void containerTick() {
         super.containerTick();
-/*
-        this.updateButtons();
-*/
     }
-
-
 
     public void render(GuiGraphics p_283062_, int p_282876_, int p_282015_, float p_281395_) {
         super.render(p_283062_, p_282876_, p_282015_, p_281395_);
         this.renderTooltip(p_283062_, p_282876_, p_282015_);
     }
 
-    abstract static class BulletinBoardScreenButton extends AbstractButton implements BulletinBoardButton {
-        private boolean selected;
+    abstract static class BulletinBoardScreenButton extends AbstractButton {
+        protected boolean selected;
 
-        protected BulletinBoardScreenButton(int x, int y) {
-            super(x, y, 20, 20, CommonComponents.EMPTY);
-        }
 
         protected BulletinBoardScreenButton(int x, int y, Component message) {
             super(x, y, 20, 20, message);
         }
 
-        public void renderContents(GuiGraphics guiGraphics, int idkkk, int idkk, float p_283562_) {
+        public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             Identifier identifier;
             if (!this.active) {
                 identifier = BulletinBoardScreen.BUTTON_DISABLED_SPRITE;
@@ -266,18 +303,8 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         }
 
         @Override
-        public void updateStatus(int var1) {
-
-        }
-
-        @Override
         public void onPress(InputWithModifiers input) {
-            toggleExtendedMenu();
+
         }
     }
-
-    interface BulletinBoardButton {
-        void updateStatus(int var1);
-    }
-
 }

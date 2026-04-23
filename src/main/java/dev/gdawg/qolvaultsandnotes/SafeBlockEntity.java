@@ -5,7 +5,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +17,8 @@ import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.minecraft.world.Container;
+
+import java.util.UUID;
 
 public class SafeBlockEntity extends BlockEntity implements Container, LidBlockEntity {
     private String assignedCode = "";
@@ -30,6 +31,14 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
 
     public String getAssignedCode() { return assignedCode; }
     public void setAssignedCode(String code) { this.assignedCode = code; }
+
+    private boolean locked = false;
+    private UUID lockOwner = null;
+
+    public boolean isLocked() { return locked; }
+    public void setLocked(boolean locked) { this.locked = locked; }
+    public UUID getLockOwner() { return lockOwner; }
+    public void setLockOwner(UUID uuid) { this.lockOwner = uuid; }
 
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
         @Override
@@ -109,6 +118,8 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
         super.saveAdditional(output);
         output.putString("assigned_code", assignedCode);
         output.putBoolean("locked_with_keycard", lockedWithKeycard);
+        output.putBoolean("locked", locked);
+        if (lockOwner != null) output.putString("lock_owner", lockOwner.toString());
     }
 
     @Override
@@ -116,6 +127,9 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
         super.loadAdditional(input);
         assignedCode = input.getStringOr("assigned_code", "");
         lockedWithKeycard = input.getBooleanOr("locked_with_keycard", false);
+        locked = input.getBooleanOr("locked", false);
+        String uuidStr = input.getStringOr("lock_owner", "");
+        lockOwner = uuidStr.isEmpty() ? null : UUID.fromString(uuidStr);
     }
 
     @Override

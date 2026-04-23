@@ -1,3 +1,6 @@
+/// ----- VaultBlockEntity -----
+/// Handles the vault entity and interactions.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
@@ -8,7 +11,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -18,10 +23,10 @@ public class VaultBlockEntity extends BaseContainerBlockEntity {
 
     public static final int SIZE = 72;
     private NonNullList<ItemStack> items = NonNullList.withSize(
-            //firstly the size, how many slots
-            SIZE,
-            //secondly since it's a NonNullList, what to fill empty slots with:
-            ItemStack.EMPTY);
+        SIZE,
+        // Since it's a NonNullList, specify what to fill the empty slots with
+        ItemStack.EMPTY);
+
 
     public VaultBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VAULT_ENTITY.get(), pos, state);
@@ -77,7 +82,6 @@ public class VaultBlockEntity extends BaseContainerBlockEntity {
     @Override
     protected Component getDefaultName() {
         return Component.translatable("container.qolvaultsandnotes.vault");
-        //this requires that we make an entry for the container name in our lang file.
     }
 
     @Override
@@ -117,4 +121,6 @@ public class VaultBlockEntity extends BaseContainerBlockEntity {
         super.loadAdditional(input);
         ContainerHelper.loadAllItems(input, this.items);
     }
+
+
 }

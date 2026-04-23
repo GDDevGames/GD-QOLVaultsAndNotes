@@ -1,3 +1,6 @@
+/// ----- ModBlocks -----
+/// Registers the new blocks for the game to recognize.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.registries.Registries;
@@ -9,19 +12,19 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public class ModBlocks {
-    // Create a Deferred Register to hold Blocks which will all be registered under the "examplemod" namespace
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(QOLVaultsAndNotes.MODID);
 
-    // Creates a new Block with the id "examplemod:example_block", combining the namespace and path
     public static final DeferredBlock<BulletinBoardBlock> BULLETIN_BOARD_BLOCK = BLOCKS.register("bulletin_board",
-            id -> new BulletinBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().strength(2f, 6f).requiresCorrectToolForDrops().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
+id -> new BulletinBoardBlock(BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).noOcclusion().strength(2f, 6f).requiresCorrectToolForDrops().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<SafeBlock> SAFE_BLOCK = BLOCKS.register("safe",
-            id -> new SafeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
+id -> new SafeBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().randomTicks().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<VaultBlock> VAULT_BLOCK = BLOCKS.register("vault",
-            id -> new VaultBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().setId(ResourceKey.create(Registries.BLOCK, id))));
+id -> new VaultBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().setId(ResourceKey.create(Registries.BLOCK, id))));
     public static final DeferredBlock<VaultPartBlock> VAULT_PART_BLOCK = BLOCKS.register("vault_part",
-            id -> new VaultPartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().setId(ResourceKey.create(Registries.BLOCK, id))));
+id -> new VaultPartBlock(BlockBehaviour.Properties.of().mapColor(MapColor.METAL).noOcclusion().strength(50f, 1600f).requiresCorrectToolForDrops().setId(ResourceKey.create(Registries.BLOCK, id))));
 
+    // ----------
+    // Theodor:
     // .setId just has to do with setting a block id for a block, since apparently since of 1.21 and further forward, they added so you have to manually add that stuff
     // ExampleBlock is a new class or whatever made because registerSimpleBlock is not that functionally useful, instead it was just better to remake the whole thing into it's own register
     // ExampleBlock was also made in order to give the correct hitbox to the block when placed
@@ -39,7 +42,7 @@ public class ModBlocks {
     // you do this by either shift + f6 which I didn't feel like it worked
     // or you use ctrl + r to search and replace, which I don't know if it works either
 
-    // Register the Deferred Register to the mod event bus so blocks get registered
+    // Send the new blocks to the event bus
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);
     }

@@ -1,9 +1,9 @@
 package dev.gdawg.qolvaultsandnotes;
-import dev.gdawg.qolvaultsandnotes.QOLVaultsAndNotes;
-import dev.gdawg.qolvaultsandnotes.SafeCodePacket;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -13,39 +13,65 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 public class SafeCodeScreen extends Screen {
 
     private static final Identifier GUI_PINCODE = Identifier.fromNamespaceAndPath(
-            QOLVaultsAndNotes.MODID, "textures/gui/container/safe_pincode.png");
+            QOLVaultsAndNotes.MODID, "textures/gui/container/pincode_screen.png");
     private static final Identifier GUI_SERIAL = Identifier.fromNamespaceAndPath(
-            QOLVaultsAndNotes.MODID, "textures/gui/container/safe_serialcode.png");
+            QOLVaultsAndNotes.MODID, "textures/gui/container/serialcode_screen.png");
+    private static final Identifier SEGMENT_ACTIVE = Identifier.fromNamespaceAndPath(
+            QOLVaultsAndNotes.MODID, "textures/gui/sprites/serial_code_screen/xp_filled.png");
 
     private final BlockPos blockPos;
-    private final boolean isKeycard; // true = serial screen, false = pincode screen
+    private final boolean isKeycard; // false = key = serial screen, true = keycard = pincode screen
     private String enteredCode = "";
 
-    private static final int IMAGE_WIDTH  = 256;
-    private static final int IMAGE_HEIGHT = 256;
+    // Serial layout segment state — 18 toggleable segments
+    private final boolean[] segments = new boolean[18];
+
+    private static int IMAGE_WIDTH  = 180;
+    private static int IMAGE_HEIGHT = 211;
     private int leftPos;
     private int topPos;
 
+    // Segment dimensions
+    private static final int SEGMENT_WIDTH  = 10;
+    private static final int SEGMENT_HEIGHT = 20;
+    private static final int SEGMENT_GAP    = 4;
+
     public SafeCodeScreen(BlockPos blockPos, boolean isKeycard) {
-        super(Component.translatable("screen.qolvaultsandnotes.safe_code"));
+        super(Component.translatable("container.qolvaultsandnotes.safe_code"));
         this.blockPos = blockPos;
         this.isKeycard = isKeycard;
     }
 
     @Override
     protected void init() {
-        this.leftPos = (this.width  - IMAGE_WIDTH)  / 2;
-        this.topPos  = (this.height - IMAGE_HEIGHT) / 2;
-
-        if (isKeycard) {
+        if (!isKeycard) {
             initSerialLayout();
         } else {
             initPincodeLayout();
         }
     }
 
+    private void initSerialLayout() {
+        IMAGE_WIDTH = 256;
+        IMAGE_HEIGHT = 95;
+        this.leftPos = (this.width  - IMAGE_WIDTH)  / 2;
+        this.topPos  = (this.height - IMAGE_HEIGHT) / 2;
+
+        // 18 segments are rendered and clicked manually — see render() and mouseClicked()
+        // Only a confirm button is added as a widget
+        addRenderableWidget(Button.builder(
+                Component.literal("OK"),
+                btn -> onConfirmPressed()
+        ).bounds(leftPos + IMAGE_WIDTH / 2 - 15, topPos + 160, 30, 20).build());
+
+    }
+
     private void initPincodeLayout() {
-        // Number buttons 1-9
+        IMAGE_WIDTH = 180;
+        IMAGE_HEIGHT = 211;
+        this.leftPos = (this.width  - IMAGE_WIDTH)  / 2;
+        this.topPos  = (this.height - IMAGE_HEIGHT) / 2;
+
         for (int i = 1; i <= 9; i++) {
             final int digit = i;
             int col = (i - 1) % 3;
@@ -56,13 +82,11 @@ public class SafeCodeScreen extends Screen {
             ).bounds(leftPos + 20 + col * 24, topPos + 50 + row * 24, 20, 20).build());
         }
 
-        // 0 button
         addRenderableWidget(Button.builder(
                 Component.literal("0"),
                 btn -> enteredCode += "0"
         ).bounds(leftPos + 44, topPos + 122, 20, 20).build());
 
-        // Backspace
         addRenderableWidget(Button.builder(
                 Component.literal("<"),
                 btn -> {
@@ -71,44 +95,60 @@ public class SafeCodeScreen extends Screen {
                 }
         ).bounds(leftPos + 20, topPos + 122, 20, 20).build());
 
-        // Confirm
+        addRenderableWidget(Button.builder(
+                Component.literal("x"),
+                btn -> enteredCode = ""
+        ).bounds(leftPos + 20, topPos + 140, 20, 20).build());
+
         addRenderableWidget(Button.builder(
                 Component.literal("OK"),
                 btn -> onConfirmPressed()
         ).bounds(leftPos + 68, topPos + 122, 30, 20).build());
     }
 
-    private void initSerialLayout() {
-        // Serial code uses a text field instead of number buttons
-        // since keycard codes have no length limit and can be any characters
-        net.minecraft.client.gui.components.EditBox codeField =
-                new net.minecraft.client.gui.components.EditBox(
-                        this.font,
-                        leftPos + 20, topPos + 60,
-                        IMAGE_WIDTH - 40, 20,
-                        Component.translatable("screen.qolvaultsandnotes.safe_code")
-                );
-        codeField.setResponder(text -> enteredCode = text);
-        addRenderableWidget(codeField);
-
-        // Confirm
-        addRenderableWidget(Button.builder(
-                Component.literal("OK"),
-                btn -> onConfirmPressed()
-        ).bounds(leftPos + IMAGE_WIDTH / 2 - 15, topPos + 100, 30, 20).build());
+    private void onConfirmPressed() {
+        String code;
+        if (!isKeycard) {
+            // Build dot/dash string from segment states
+            StringBuilder sb = new StringBuilder();
+            for (boolean segment : segments) {
+                sb.append(segment ? '.' : '-');
+            }
+            code = sb.toString();
+        } else {
+            code = enteredCode;
+        }
+        ClientPacketDistributor.sendToServer(new SafeCodePacket(blockPos, code));
+        this.onClose();
     }
 
-    private void onConfirmPressed() {
-        ClientPacketDistributor.sendToServer(new SafeCodePacket(blockPos, enteredCode));
-        this.onClose();
+    @Override
+    public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean isDoubleClick) {
+        double mouseX = mouseButtonEvent.x();
+        double mouseY = mouseButtonEvent.y();
+        if (!isKeycard) {
+            for (int i = 0; i < 18; i++) {
+                int segX = leftPos + 20 + i * (SEGMENT_WIDTH + SEGMENT_GAP);
+                int segY = topPos + 100;
+                if (mouseX >= segX && mouseX < segX + SEGMENT_WIDTH
+                        && mouseY >= segY && mouseY < segY + SEGMENT_HEIGHT) {
+                    segments[i] = !segments[i]; // toggle
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(mouseButtonEvent, isDoubleClick);
     }
 
     @Override
     public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        // isKeycard false = key = serial screen, isKeycard true = keycard = pincode screen
+        if(isKeycard) topPos = (this.width - 128) / 2;
+
         guiGraphics.blit(
                 RenderPipelines.GUI_TEXTURED,
-                isKeycard ? GUI_SERIAL : GUI_PINCODE,
+                isKeycard ? GUI_PINCODE : GUI_SERIAL,
                 leftPos, topPos,
                 0.0f, 0.0f,
                 IMAGE_WIDTH, IMAGE_HEIGHT,
@@ -119,8 +159,27 @@ public class SafeCodeScreen extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        // Only draw the entered code display for pincode — serial uses EditBox
+
         if (!isKeycard) {
+            // Draw the 18 segments for serial layout
+            for (int i = 0; i < 18; i++) {
+                int segX = leftPos + 20 + i * (SEGMENT_WIDTH + SEGMENT_GAP);
+                int segY = topPos + 100;
+                if (segments[i]) {
+                    // Draw filled segment using active_small texture
+                    guiGraphics.blit(
+                            RenderPipelines.GUI_TEXTURED,
+                            SEGMENT_ACTIVE,
+                            segX, segY,
+                            0.0f, 0.0f,
+                            SEGMENT_WIDTH, SEGMENT_HEIGHT,
+                            SEGMENT_WIDTH, SEGMENT_HEIGHT
+                    );
+                }
+                // Unfilled segments show through from the background PNG
+            }
+        } else {
+            // Draw entered digits for pincode screen
             guiGraphics.drawString(this.font,
                     Component.literal(enteredCode),
                     leftPos + 20, topPos + 30,

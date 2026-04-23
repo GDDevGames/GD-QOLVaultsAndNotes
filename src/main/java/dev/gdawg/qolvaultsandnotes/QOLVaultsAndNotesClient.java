@@ -1,3 +1,6 @@
+/// ----- QOLVaultsAndNotesClient -----
+/// Initializes the mod clientside.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.neoforged.api.distmarker.Dist;

@@ -4,11 +4,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -32,8 +35,8 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
     public BulletinBoardBlock(Properties props) {
         super(props);
         this.registerDefaultState(this.stateDefinition.any()
-                .setValue(FACING, Direction.NORTH)
-                .setValue(ACTIVATED, false));
+            .setValue(FACING, Direction.NORTH)
+            .setValue(ACTIVATED, false));
     }
 
     @Override
@@ -49,8 +52,8 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState()
-                .setValue(FACING, context.getHorizontalDirection().getOpposite())
-                .setValue(ACTIVATED, false);
+            .setValue(FACING, context.getHorizontalDirection().getOpposite())
+            .setValue(ACTIVATED, false);
     }
 
     @Override
@@ -60,17 +63,67 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
         }
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof BulletinBoardBlockEntity blockEntity) {
-            /*player.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, blockEntity, 2),
-                    Component.literal("Bulletin Board")
-            ));*/
+            player.openMenu(new SimpleMenuProvider(
+                (id, inventory, p) -> new BulletinBoardMenu(id, inventory, blockEntity),
+                Component.literal("")
+            ), pos);
+        }
+
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        BulletinBoardBlockEntity be = (BulletinBoardBlockEntity) level.getBlockEntity(pos);
+        ItemStack heldItem = player.getItemInHand(hand);
+
+
+        if(heldItem.is(Items.INK_SAC.asItem())) {
+            int fillableAmount = 64 - be.getItem(0).getCount();
+            be.setItem(0, heldItem);
+            if(fillableAmount > heldItem.getCount()) {
+                heldItem.shrink(heldItem.getCount());
+                return InteractionResult.SUCCESS;
+            }
+            else if (fillableAmount < heldItem.getCount()) {
+                heldItem.shrink(fillableAmount);
+                player.displayClientMessage(Component.literal("This bulletin board is now filled with ink sacs."), true);
+                return InteractionResult.SUCCESS;
+            }
+            else if (fillableAmount == 0)
+            {
+                player.displayClientMessage(Component.literal("There is no space for ink sacs in this bulletin board."), true);
+                return InteractionResult.PASS;
+            }
+        } else if (heldItem.is(Items.PAPER.asItem())) {
+            int fillableAmount = 64 - be.getItem(1).getCount();
+            be.setItem(1, heldItem);
+            if(fillableAmount > heldItem.getCount()) {
+                heldItem.shrink(heldItem.getCount());
+                return InteractionResult.SUCCESS;
+            }
+            else if (fillableAmount < heldItem.getCount()) {
+                heldItem.shrink(fillableAmount);
+                player.displayClientMessage(Component.literal("This bulletin board is now filled with paper."), true);
+                return InteractionResult.SUCCESS;
+            }
+            else if (fillableAmount == 0)
+            {
+                player.displayClientMessage(Component.literal("There is no space for paper in this bulletin board."), true);
+                return InteractionResult.PASS;
+            }
+        }
+
+        if (!(level instanceof ServerLevel)) {
+            return InteractionResult.CONSUME;
+        }
+        if (be instanceof BulletinBoardBlockEntity blockEntity) {
             player.openMenu(new SimpleMenuProvider(
                     (id, inventory, p) -> new BulletinBoardMenu(id, inventory, blockEntity),
                     Component.literal("")
             ), pos);
         }
-
-        return InteractionResult.SUCCESS;
+        return InteractionResult.PASS;
     }
 
     @Override

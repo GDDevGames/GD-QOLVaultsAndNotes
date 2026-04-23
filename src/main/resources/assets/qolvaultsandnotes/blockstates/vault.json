@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "qolvaultsandnotes:block/vault"},
-    "facing=south": { "model": "qolvaultsandnotes:block/vault"},
-    "facing=east":  { "model": "qolvaultsandnotes:block/vault"},
-    "facing=west":  { "model": "qolvaultsandnotes:block/vault"}
+    "activated=false,facing=north": { "model": "qolvaultsandnotes:block/vault" },
+    "activated=false,facing=south": { "model": "qolvaultsandnotes:block/vault" },
+    "activated=false,facing=east": { "model": "qolvaultsandnotes:block/vault" },
+    "activated=false,facing=west": { "model": "qolvaultsandnotes:block/vault" },
+    "activated=true,facing=north": { "model": "qolvaultsandnotes:block/vault_activated" },
+    "activated=true,facing=south": { "model": "qolvaultsandnotes:block/vault_activated" },
+    "activated=true,facing=east": { "model": "qolvaultsandnotes:block/vault_activated" },
+    "activated=true,facing=west": { "model": "qolvaultsandnotes:block/vault_activated" }
   }
 }

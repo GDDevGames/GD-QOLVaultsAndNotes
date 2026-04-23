@@ -1,3 +1,6 @@
+/// ----- VaultBlockEntityRenderState -----
+/// Class that's needed for modifying the vaults RenderState.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
