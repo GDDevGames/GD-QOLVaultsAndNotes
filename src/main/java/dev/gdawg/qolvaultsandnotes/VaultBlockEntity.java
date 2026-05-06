@@ -6,21 +6,27 @@ package dev.gdawg.qolvaultsandnotes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
+import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
-public class VaultBlockEntity extends BaseContainerBlockEntity {
-
+public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlockEntity {
+    private final ChestLidController chestLidController = new ChestLidController();
     public static final int SIZE = 72;
     private NonNullList<ItemStack> items = NonNullList.withSize(
         SIZE,
@@ -71,6 +77,7 @@ public class VaultBlockEntity extends BaseContainerBlockEntity {
         stack.limitSize(this.getMaxStackSize(stack));
         items.set(slot, stack);
         this.setChanged();
+        //syncToViewers();
     }
 
     @Override
@@ -121,6 +128,90 @@ public class VaultBlockEntity extends BaseContainerBlockEntity {
         super.loadAdditional(input);
         ContainerHelper.loadAllItems(input, this.items);
     }
+
+    private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
+        @Override
+        protected void onOpen(Level level, BlockPos pos, BlockState state) {
+            level.setBlock(pos, state.setValue(VaultBlock.ACTIVATED, true), 3);
+        }
+
+        @Override
+        protected void onClose(Level level, BlockPos pos, BlockState state) {
+            level.setBlock(pos, state.setValue(VaultBlock.ACTIVATED, false), 3);
+        }
+
+        @Override
+        protected void openerCountChanged(Level level, BlockPos pos, BlockState state, int count, int openCount) {
+            VaultBlockEntity.this.signalOpenCount(level, pos, state, count, openCount);
+        }
+
+        @Override
+        public boolean isOwnContainer(Player player) {
+            if (!(player.containerMenu instanceof VaultMenu)) {
+                return false;
+            }
+            return ((VaultMenu) player.containerMenu).blockEntity == VaultBlockEntity.this;
+        }
+    };
+
+    public static void lidAnimateTick(Level level, BlockPos pos, BlockState state, VaultBlockEntity entity) {
+        boolean isOpen = state.getValue(VaultBlock.ACTIVATED);
+        entity.chestLidController.shouldBeOpen(isOpen);
+        entity.chestLidController.tickLid();
+    }
+
+    @Override
+    public float getOpenNess(float partialTicks) {
+        return this.chestLidController.getOpenness(partialTicks);
+    }
+
+    @Override
+    public void startOpen(ContainerUser user) {
+        if (!this.remove && !user.getLivingEntity().isSpectator()) {
+            this.openersCounter.incrementOpeners(
+                    user.getLivingEntity(), this.getLevel(), this.getBlockPos(), this.getBlockState(),
+                    user.getContainerInteractionRange()
+            );
+        }
+    }
+
+    @Override
+    public void stopOpen(ContainerUser user) {
+        if (!this.remove && !user.getLivingEntity().isSpectator()) {
+            this.openersCounter.decrementOpeners(
+                    user.getLivingEntity(), this.getLevel(), this.getBlockPos(), this.getBlockState()
+            );
+        }
+    }
+
+    protected void signalOpenCount(Level level, BlockPos pos, BlockState state, int eventId, int eventParam) {
+        level.blockEvent(pos, state.getBlock(), 1, eventParam);
+    }
+
+    @Override
+    public boolean triggerEvent(int id, int type) {
+        if (id == 1) {
+            this.chestLidController.shouldBeOpen(type > 0);
+            return true;
+        }
+        return super.triggerEvent(id, type);
+    }
+
+    /*private void syncToViewers() {
+        if (this.level == null || this.level.isClientSide()) return;
+
+        NonNullList<ItemStack> allItems = NonNullList.withSize(SIZE, ItemStack.EMPTY);
+        for (int i = 0; i < SIZE; i++) {
+            allItems.set(i, items.get(i).copy());
+        }
+
+        for (ServerPlayer player : ((ServerLevel) this.level).players()) {
+            if (player.containerMenu instanceof VaultMenu vaultMenu
+                    && vaultMenu.blockEntity == this) {
+                PacketDistributor.sendToPlayer(player, new VaultFullSyncPacket(allItems));
+            }
+        }
+    }*/
 
 
 }

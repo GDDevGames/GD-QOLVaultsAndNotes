@@ -78,6 +78,7 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
         ItemStack heldItem = player.getItemInHand(hand);
 
 
+
         if(heldItem.is(Items.INK_SAC.asItem())) {
             int fillableAmount = 64 - be.getItem(0).getCount();
             be.setItem(0, heldItem);

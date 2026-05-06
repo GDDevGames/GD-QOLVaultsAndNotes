@@ -11,9 +11,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.Nullable;
-
-import java.util.List;
 
 public class VaultMenu extends AbstractContainerMenu {
     public final VaultBlockEntity blockEntity;
@@ -26,12 +25,12 @@ public class VaultMenu extends AbstractContainerMenu {
     public static final int SLOT_START_Y = 18;
     private int currentRowOffset = 0;
 
-    private final NonNullList<ItemStack> clientItems = NonNullList.withSize(TOTAL_SLOTS, ItemStack.EMPTY);
+    //private final NonNullList<ItemStack> clientItems = NonNullList.withSize(TOTAL_SLOTS, ItemStack.EMPTY);
 
     // Custom slot that redirects to a mutable vault index
     public class VaultSlot extends Slot {
         private int vaultIndex;
-        private ItemStack clientItem = ItemStack.EMPTY; // client-side display cache
+        //private ItemStack clientItem = ItemStack.EMPTY; // client-side display cache
 
         public VaultSlot(int visibleRow, int col) {
             super(blockEntity, visibleRow * VAULT_COLS + col,
@@ -45,18 +44,29 @@ public class VaultMenu extends AbstractContainerMenu {
             this.vaultIndex = newIndex;
         }
 
+/*
         public void setClientItem(ItemStack stack) {
             this.clientItem = stack;
+        }
+*/
+
+        @Override
+        public void set(ItemStack stack) {
+            blockEntity.setItem(vaultIndex, stack);
+            this.setChanged();
         }
 
         @Override
         public ItemStack getItem() {
-            // On the client, use the cached item so the display is always correct.
-            // On the server, go straight to the block entity
-            if (net.minecraft.client.Minecraft.getInstance().level != null) {
+            /*if (blockEntity.getLevel() != null && blockEntity.getLevel().isClientSide()) {
                 return clientItem;
-            }
+            }*/
             return blockEntity.getItem(vaultIndex);
+        }
+
+        @Override
+        public ItemStack remove(int amount) {
+            return blockEntity.removeItem(vaultIndex, amount);
         }
     }
 
@@ -145,16 +155,24 @@ public class VaultMenu extends AbstractContainerMenu {
         return true;
     }
 
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        if (blockEntity != null) {
+            blockEntity.stopOpen(player);
+        }
+    }
+
     // Fully syncs all 72 items for the client when the corresponding packet is received
-    public void applyFullSync(List<ItemStack> items) {
+    /*public void applyFullSync(NonNullList<ItemStack> items) {
         for (int i = 0; i < Math.min(items.size(), TOTAL_SLOTS); i++) {
             clientItems.set(i, items.get(i).copy());
         }
         refreshVisibleSlotsFromClientCache();
-    }
+    }*/
 
     // Ensures the renderer sees the correct items in the 54 visible slots via the client's cache
-    public void refreshVisibleSlotsFromClientCache() {
+    /*public void refreshVisibleSlotsFromClientCache() {
         for (int row = 0; row < VISIBLE_ROWS; row++) {
             for (int col = 0; col < VAULT_COLS; col++) {
                 int slotIndex = row * VAULT_COLS + col;
@@ -165,5 +183,5 @@ public class VaultMenu extends AbstractContainerMenu {
                 slot.setClientItem(clientItems.get(vaultIndex));
             }
         }
-    }
+    }*/
 }

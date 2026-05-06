@@ -6,6 +6,7 @@ package dev.gdawg.qolvaultsandnotes;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -68,18 +69,19 @@ public class VaultBlock extends BaseEntityBlock {
                 (id, inventory, p) -> new VaultMenu(id, inventory, blockEntity),
                 Component.translatable("container.qolvaultsandnotes.vault")
             ), pos);
+            blockEntity.startOpen(player);
 
             // Send full inventory to the client NOW, after the menu is open
-            List<ItemStack> allItems = new ArrayList<>();
+            /*NonNullList<ItemStack> allItems = NonNullList.withSize(72, ItemStack.EMPTY);
             for (int i = 0; i < VaultBlockEntity.SIZE; i++) {
-                allItems.add(blockEntity.getItem(i).copy());
-            }
-            PacketDistributor.sendToPlayer(
+                allItems.set(i, blockEntity.getItem(i).copy());
+            }*/
+            /*PacketDistributor.sendToPlayer(
                 (ServerPlayer) player,
                 new VaultFullSyncPacket(allItems)
-            );
+            );*/
         }
-        level.setBlock(pos, level.getBlockState(pos).setValue(ACTIVATED, true), 3);
+        //level.setBlock(pos, level.getBlockState(pos).setValue(ACTIVATED, true), 3);
         return InteractionResult.SUCCESS;
     }
 
@@ -99,7 +101,8 @@ public class VaultBlock extends BaseEntityBlock {
                 Component.translatable("container.qolvaultsandnotes.vault")
                 // Daniel: Component.translatable lets you grab from the lang/files with translations. important
             ), pos);
-            level.setBlock(pos, level.getBlockState(pos).setValue(ACTIVATED, true), 3);
+            blockEntity.startOpen(player);
+            //level.setBlock(pos, level.getBlockState(pos).setValue(ACTIVATED, true), 3);
         }
     }
 

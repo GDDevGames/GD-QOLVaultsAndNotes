@@ -121,6 +121,7 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
         int rowOffset = Math.round(scrollOffset * 2);
         this.menu.scrollTo(rowOffset);
         ClientPacketDistributor.sendToServer(new VaultScrollPacket(rowOffset));
+        System.out.println("Client sending scroll: " + rowOffset);
     }
 
     private boolean isInsideScrollbar(double mouseX, double mouseY) {

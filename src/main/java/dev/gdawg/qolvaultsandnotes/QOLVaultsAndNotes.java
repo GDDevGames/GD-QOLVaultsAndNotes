@@ -35,6 +35,26 @@ public class QOLVaultsAndNotes {
     private void registerPackets(RegisterPayloadHandlersEvent event) {
         var registrar = event.registrar("1");
 
+        registrar.playToServer(
+            BulletinBoardPinPacket.TYPE,
+            BulletinBoardPinPacket.STREAM_CODEC,
+            (packet, context) -> {
+                context.enqueueWork(() -> {
+                    ServerPlayer player = (ServerPlayer) context.player();
+                    Level level = player.level();
+                    BulletinBoardBlockEntity be =
+                            (BulletinBoardBlockEntity) level.getBlockEntity(packet.pos());
+                    if (be != null && player.containerMenu instanceof BulletinBoardMenu menu) {
+                        boolean success = menu.pinNote(packet.slot(), packet.title(),
+                                packet.body(), packet.colour(), packet.isNew());
+                        if (success) {
+                            be.setNote(packet.slot(), packet.title(), packet.body(), packet.colour());
+                        }
+                    }
+                });
+            }
+        );
+
         // Scrolling packet for the vault
         registrar.playToServer(
             VaultScrollPacket.TYPE,
@@ -42,6 +62,7 @@ public class QOLVaultsAndNotes {
             (packet, context) -> {
                 ServerPlayer player = (ServerPlayer) context.player();
                 if (player.containerMenu instanceof VaultMenu vaultMenu) {
+                    System.out.println("Server received scroll: " + packet.rowOffset());
                     vaultMenu.scrollTo(packet.rowOffset());
                 }
             }
@@ -66,7 +87,7 @@ public class QOLVaultsAndNotes {
         );
 
         // Sync packet for the vault entity
-        registrar.playToClient(
+        /*registrar.playToClient(
             VaultFullSyncPacket.TYPE,
             VaultFullSyncPacket.STREAM_CODEC,
             (packet, context) -> {
@@ -79,7 +100,7 @@ public class QOLVaultsAndNotes {
                     }
                 });
             }
-        );
+        );*/
 
         // Packet for creating the safe code screen
         registrar.playToClient(

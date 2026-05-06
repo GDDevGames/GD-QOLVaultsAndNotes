@@ -16,6 +16,41 @@ import net.minecraft.world.level.storage.ValueOutput;
 public class BulletinBoardBlockEntity extends BlockEntity implements Container {
     private final NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
 
+    public static final int MAX_NOTES = 8;
+
+    private final String[] noteTitles = new String[MAX_NOTES];
+    private final String[] noteBodies = new String[MAX_NOTES];
+    private final int[] noteColours = new int[MAX_NOTES]; // 0=yellow, 1=green, 2=blue, 3=pink
+    private final boolean[] noteOccupied = new boolean[MAX_NOTES];
+
+    public String getNoteTitle(int slot) { return noteTitles[slot] != null ? noteTitles[slot] : ""; }
+    public String getNoteBody(int slot) { return noteBodies[slot] != null ? noteBodies[slot] : ""; }
+    public int getNoteColour(int slot) { return noteColours[slot]; }
+    public boolean isNoteOccupied(int slot) { return noteOccupied[slot]; }
+
+    public void setNote(int slot, String title, String body, int colour) {
+        noteTitles[slot] = title;
+        noteBodies[slot] = body;
+        noteColours[slot] = colour;
+        noteOccupied[slot] = true;
+        setChanged();
+    }
+
+    public void clearNote(int slot) {
+        noteTitles[slot] = "";
+        noteBodies[slot] = "";
+        noteColours[slot] = 0;
+        noteOccupied[slot] = false;
+        setChanged();
+    }
+
+    public int getNextFreeSlot() {
+        for (int i = 0; i < MAX_NOTES; i++) {
+            if (!noteOccupied[i]) return i;
+        }
+        return -1;
+    }
+
     public BulletinBoardBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BULLETIN_BOARD_ENTITY.get(), pos, state);
     }
@@ -85,6 +120,12 @@ public class BulletinBoardBlockEntity extends BlockEntity implements Container {
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+        for (int i = 0; i < MAX_NOTES; i++) {
+            output.putBoolean("note_occupied_" + i, noteOccupied[i]);
+            output.putString("note_title_" + i, noteTitles[i] != null ? noteTitles[i] : "");
+            output.putString("note_body_" + i, noteBodies[i] != null ? noteBodies[i] : "");
+            output.putInt("note_colour_" + i, noteColours[i]);
+        }
         for (int i = 0; i < items.size(); i++) {
             if (!items.get(i).isEmpty()) {
                 output.store("item_" + i, ItemStack.CODEC, items.get(i));
@@ -96,6 +137,12 @@ public class BulletinBoardBlockEntity extends BlockEntity implements Container {
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+        for (int i = 0; i < MAX_NOTES; i++) {
+            noteOccupied[i] = input.getBooleanOr("note_occupied_" + i, false);
+            noteTitles[i] = input.getStringOr("note_title_" + i, "");
+            noteBodies[i] = input.getStringOr("note_body_" + i, "");
+            noteColours[i] = input.getIntOr("note_colour_" + i, 0);
+        }
         for (int i = 0; i < items.size(); i++) {
             items.set(i, input.read("item_" + i, ItemStack.CODEC).orElse(ItemStack.EMPTY));
         }

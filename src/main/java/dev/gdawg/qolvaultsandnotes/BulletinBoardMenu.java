@@ -16,6 +16,24 @@ public class BulletinBoardMenu extends AbstractContainerMenu {
     NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
     BulletinBoardBlockEntity blockEntity;
 
+    public boolean pinNote(int slot, String title, String body, int colour, boolean isNew) {
+        if (isNew) {
+            // New note costs 2 paper
+            ItemStack paper = blockEntity.getItem(1);
+            if (paper.getCount() < 2) return false;
+            paper.shrink(2);
+            blockEntity.setItem(1, paper);
+        } else {
+            // Editing existing note costs 1 ink sac
+            ItemStack ink = blockEntity.getItem(0);
+            if (ink.getCount() < 1) return false;
+            ink.shrink(1);
+            blockEntity.setItem(0, ink);
+        }
+        blockEntity.setNote(slot, title, body, colour);
+        return true;
+    }
+
     public BulletinBoardMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {
         this(containerId, playerInventory, playerInventory.player.level().getBlockEntity(extraData.readBlockPos()));
     }

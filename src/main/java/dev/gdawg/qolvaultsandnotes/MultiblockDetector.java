@@ -5,6 +5,7 @@ package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -43,24 +44,27 @@ public class MultiblockDetector {
 
     public static void formVault(Level level, BlockPos origin, Direction facing) {
         // Collect all items from all 8 safes
-        List<ItemStack> collectedItems = new ArrayList<>();
-        for (int x = 0; x < 2; x++) {
-            for (int y = 0; y < 2; y++) {
-                for (int z = 0; z < 2; z++) {
-                    BlockPos pos = origin.offset(x, y, z);
-                    BlockEntity be = level.getBlockEntity(pos);
-                    if (be instanceof SafeBlockEntity safe) {
-                        for (int i = 0; i < safe.getContainerSize(); i++) {
-                            ItemStack stack = safe.getItem(i);
-                            if (!stack.isEmpty()) {
-                                collectedItems.add(stack.copy());
+        NonNullList<ItemStack> collectedItems = NonNullList.withSize(VaultBlockEntity.SIZE, ItemStack.EMPTY);
+        for (int i = 0; i <= collectedItems.size(); i++) {
+            for (int x = 0; x < 2; x++) {
+                for (int y = 0; y < 2; y++) {
+                    for (int z = 0; z < 2; z++) {
+                        BlockPos pos = origin.offset(x, y, z);
+                        BlockEntity be = level.getBlockEntity(pos);
+                        if (be instanceof SafeBlockEntity safe) {
+                            for (int counter = 0; counter < safe.getContainerSize(); counter++) {
+                                ItemStack stack = safe.getItem(counter);
+                                if (!stack.isEmpty()) {
+                                    collectedItems.set(i, stack.copy());
+                                }
                             }
+                            safe.clearContent();
                         }
-                        safe.clearContent();
                     }
                 }
             }
         }
+
         // Place the vault part blocks
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
