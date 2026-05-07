@@ -6,6 +6,8 @@ package dev.gdawg.qolvaultsandnotes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -16,7 +18,7 @@ import java.util.List;
 
 public class MultiblockDetector {
     private static final int SIZE = 2;
-    public static void onSafePlaced(Level level, BlockPos placedPos, Direction facing) {
+    public static void onSafePlaced(Level level, BlockPos placedPos, Direction facing, Player player) {
         if (level.isClientSide()) return;
         // Check to see if there are any candidates for creating a vault around the block
         for (int dx = 0; dx > -2; dx--) {
@@ -24,7 +26,7 @@ public class MultiblockDetector {
                 for (int dz = 0; dz > -2; dz--) {
                     BlockPos candidate = placedPos.offset(dx, dy, dz);
                     if (isCompleteFormation(level, candidate)) {
-                        formVault(level, candidate, facing);
+                        formVault(level, candidate, facing, player);
                         return;
                     }
                 }
@@ -42,7 +44,7 @@ public class MultiblockDetector {
         return true;
     }
 
-    public static void formVault(Level level, BlockPos origin, Direction facing) {
+    public static void formVault(Level level, BlockPos origin, Direction facing, Player player) {
         // Count and collect all items from all 8 safes
         List<ItemStack> collectedItems = new ArrayList<>();
         for (int x = 0; x < 2; x++) {
@@ -65,6 +67,7 @@ public class MultiblockDetector {
         // Abort if items exceed vault capacity
         if (collectedItems.size() > VaultBlockEntity.SIZE) {
             // Message to player will go here later
+            player.displayClientMessage(Component.literal("Vault can only form when occupied slots in safes are at most 72."), true);
             return;
         }
 
@@ -108,7 +111,7 @@ public class MultiblockDetector {
                 vault.setItem(i, collectedItems.get(i));
             }
         }
-    }   
+    }
 
     public static void breakVault(Level level, BlockPos origin, BlockPos brokenPos) {
         // Collect all items from the vault

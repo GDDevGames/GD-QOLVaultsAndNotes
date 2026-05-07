@@ -12,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.startup.Server;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -77,8 +78,10 @@ public class QOLVaultsAndNotes {
                     ServerPlayer player = (ServerPlayer) context.player();
                     Level level = player.level();
                     SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(packet.pos());
+                    SafeBlock block = (SafeBlock) level.getBlockState(packet.pos()).getBlock();
                     if (be != null && be.getAssignedCode().equals(packet.enteredCode())) {
-                        player.openMenu((MenuProvider) be);
+                        //player.openMenu((MenuProvider) be);
+                        block.openFor(player, be);
                     } else {
                         player.displayClientMessage(Component.literal("Incorrect code."), true);
                     }

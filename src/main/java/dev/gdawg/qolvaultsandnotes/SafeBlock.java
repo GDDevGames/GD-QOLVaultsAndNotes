@@ -79,7 +79,7 @@ public class SafeBlock extends BaseEntityBlock {
 
             if (!code.matches("[.\\-]+") || code.length() > 18) {
                 player.displayClientMessage(
-                        Component.literal("Key code must only contain . and -, max 18 characters."), true);
+                        Component.literal("Serial code must only contain . and -, max 18 characters."), true);
                 return InteractionResult.PASS;
             }
 
@@ -161,30 +161,30 @@ public class SafeBlock extends BaseEntityBlock {
         SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
         if (be == null) return InteractionResult.PASS;
 
-        // Lock check — only the owner can open
-        if (be.isLocked()) {
-            if (!player.getUUID().equals(be.getLockOwner())) {
-                player.displayClientMessage(Component.literal("This safe is locked."), true);
-                return InteractionResult.SUCCESS;
-            }
-        }
+        boolean hasCode = !be.getAssignedCode().isEmpty();
+        boolean locked = be.isLocked();
 
-        // Code check — open the appropriate screen
-        if (!be.getAssignedCode().isEmpty()) {
-            PacketDistributor.sendToPlayer(
-                    (ServerPlayer) player,
-                    new OpenSafeScreenPacket(pos, be.isLockedWithKeycard())
-            );
+        //if it's not unlocked, open. otherwise the code underneath this will run.
+        if(!locked) {
+            openFor(player, be);
             return InteractionResult.SUCCESS;
         }
 
-        // Nothing assigned — open inventory directly
-        player.openMenu(new SimpleMenuProvider(
-                (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, be, 2),
-                Component.translatable("container.qolvaultsandnotes.safe")
-        ));
+        if (!player.getUUID().equals(be.getLockOwner())) {
+            if(!hasCode){
+                player.displayClientMessage(Component.literal("This safe is locked."), true);
+                return InteractionResult.SUCCESS;
+            } else {
+                openSafeScreen(be, pos, player);
+            }
+        } else {
+            //IF we want even the player who locked the safe to have to see the code screen, then this should run. Otherwise we should remove what's underneath.
+            openSafeScreen(be, pos, player);
+        }
         return InteractionResult.SUCCESS;
+
     }
+
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -199,6 +199,22 @@ public class SafeBlock extends BaseEntityBlock {
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        MultiblockDetector.onSafePlaced(level, pos, state.getValue(FACING));
+        Player player = (Player) placer;
+        MultiblockDetector.onSafePlaced(level, pos, state.getValue(FACING), player);
+
+    }
+
+    public void openFor(Player player, SafeBlockEntity be) {
+        player.openMenu(new SimpleMenuProvider(
+                (id, inventory, p) -> new ChestMenu(MenuType.GENERIC_9x2, id, inventory, be, 2),
+                Component.translatable("container.qolvaultsandnotes.safe")
+        ));
+    }
+
+    private void openSafeScreen(SafeBlockEntity be, BlockPos pos, Player player) {
+        PacketDistributor.sendToPlayer(
+                (ServerPlayer) player,
+                new OpenSafeScreenPacket(pos, be.isLockedWithKeycard())
+        );
     }
 }

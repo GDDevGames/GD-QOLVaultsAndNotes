@@ -32,9 +32,11 @@ public class SafeCodeScreen extends Screen {
     private int topPos;
 
     // Segment dimensions
-    private static final int SEGMENT_WIDTH  = 10;
-    private static final int SEGMENT_HEIGHT = 20;
-    private static final int SEGMENT_GAP    = 4;
+    private static final int SEGMENT_WIDTH  = 11;
+    private static final int SEGMENT_HEIGHT = 5;
+    private static final int SEGMENT_GAP    = -1;
+    private static final int SEGMENT_START_X = 37;
+    private static final int SEGMENT_START_Y = 51;
 
     public SafeCodeScreen(BlockPos blockPos, boolean isKeycard) {
         super(Component.translatable("container.qolvaultsandnotes.safe_code"));
@@ -119,6 +121,7 @@ public class SafeCodeScreen extends Screen {
             code = enteredCode;
         }
         ClientPacketDistributor.sendToServer(new SafeCodePacket(blockPos, code));
+
         this.onClose();
     }
 
@@ -128,8 +131,9 @@ public class SafeCodeScreen extends Screen {
         double mouseY = mouseButtonEvent.y();
         if (!isKeycard) {
             for (int i = 0; i < 18; i++) {
-                int segX = leftPos + 20 + i * (SEGMENT_WIDTH + SEGMENT_GAP);
-                int segY = topPos + 100;
+                int segX = leftPos + SEGMENT_START_X + i * (SEGMENT_WIDTH + SEGMENT_GAP);
+                int segY = topPos + SEGMENT_START_Y;
+                if(i > 8) segX++;
                 if (mouseX >= segX && mouseX < segX + SEGMENT_WIDTH
                         && mouseY >= segY && mouseY < segY + SEGMENT_HEIGHT) {
                     segments[i] = !segments[i]; // toggle
@@ -163,8 +167,9 @@ public class SafeCodeScreen extends Screen {
         if (!isKeycard) {
             // Draw the 18 segments for serial layout
             for (int i = 0; i < 18; i++) {
-                int segX = leftPos + 20 + i * (SEGMENT_WIDTH + SEGMENT_GAP);
-                int segY = topPos + 100;
+                int segX = leftPos + SEGMENT_START_X + i * (SEGMENT_WIDTH + SEGMENT_GAP);
+                int segY = topPos + SEGMENT_START_Y;
+                if(i > 8) segX++;
                 if (segments[i]) {
                     // Draw filled segment using active_small texture
                     guiGraphics.blit(
