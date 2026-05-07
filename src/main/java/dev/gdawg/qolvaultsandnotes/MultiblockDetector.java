@@ -43,29 +43,45 @@ public class MultiblockDetector {
     }
 
     public static void formVault(Level level, BlockPos origin, Direction facing) {
-        // Collect all items from all 8 safes
-        NonNullList<ItemStack> collectedItems = NonNullList.withSize(VaultBlockEntity.SIZE, ItemStack.EMPTY);
-        for (int i = 0; i <= collectedItems.size(); i++) {
-            for (int x = 0; x < 2; x++) {
-                for (int y = 0; y < 2; y++) {
-                    for (int z = 0; z < 2; z++) {
-                        BlockPos pos = origin.offset(x, y, z);
-                        BlockEntity be = level.getBlockEntity(pos);
-                        if (be instanceof SafeBlockEntity safe) {
-                            for (int counter = 0; counter < safe.getContainerSize(); counter++) {
-                                ItemStack stack = safe.getItem(counter);
-                                if (!stack.isEmpty()) {
-                                    collectedItems.set(i, stack.copy());
-                                }
+        // Count and collect all items from all 8 safes
+        List<ItemStack> collectedItems = new ArrayList<>();
+        for (int x = 0; x < 2; x++) {
+            for (int y = 0; y < 2; y++) {
+                for (int z = 0; z < 2; z++) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (be instanceof SafeBlockEntity safe) {
+                        for (int i = 0; i < safe.getContainerSize(); i++) {
+                            ItemStack stack = safe.getItem(i);
+                            if (!stack.isEmpty()) {
+                                collectedItems.add(stack.copy());
                             }
-                            safe.clearContent();
                         }
                     }
                 }
             }
         }
 
-        // Place the vault part blocks
+        // Abort if items exceed vault capacity
+        if (collectedItems.size() > VaultBlockEntity.SIZE) {
+            // Message to player will go here later
+            return;
+        }
+
+        // Clear safes only after we've confirmed we can form
+        for (int x = 0; x < 2; x++) {
+            for (int y = 0; y < 2; y++) {
+                for (int z = 0; z < 2; z++) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    BlockEntity be = level.getBlockEntity(pos);
+                    if (be instanceof SafeBlockEntity safe) {
+                        safe.clearContent();
+                    }
+                }
+            }
+        }
+
+        // Place the vault blocks
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
                 for (int z = 0; z < 2; z++) {
@@ -84,21 +100,15 @@ public class MultiblockDetector {
                 }
             }
         }
-        // Fill vault with up to 72 items, drop the rest
+
+        // Fill vault with collected items
         BlockEntity be = level.getBlockEntity(origin);
         if (be instanceof VaultBlockEntity vault) {
-            int slotIndex = 0;
-            for (ItemStack stack : collectedItems) {
-                if (slotIndex >= VaultBlockEntity.SIZE) {
-                    net.minecraft.world.Containers.dropItemStack(
-                            level, origin.getX(), origin.getY(), origin.getZ(), stack);
-                } else {
-                    vault.setItem(slotIndex, stack);
-                    slotIndex++;
-                }
+            for (int i = 0; i < collectedItems.size(); i++) {
+                vault.setItem(i, collectedItems.get(i));
             }
         }
-    }
+    }   
 
     public static void breakVault(Level level, BlockPos origin, BlockPos brokenPos) {
         // Collect all items from the vault

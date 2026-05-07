@@ -68,6 +68,13 @@ public class VaultMenu extends AbstractContainerMenu {
         public ItemStack remove(int amount) {
             return blockEntity.removeItem(vaultIndex, amount);
         }
+
+        @Override
+        public boolean isActive() {
+            return true;
+        }
+
+
     }
 
     public VaultMenu(int containerId, Inventory playerInventory, FriendlyByteBuf extraData) {

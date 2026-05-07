@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
@@ -71,6 +72,12 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
             SCROLLBAR_WIDTH,
             15
         );
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY); //Important, since the AbstractContainerScreen class doesn't render tooltips by default.
     }
 
     @Override
