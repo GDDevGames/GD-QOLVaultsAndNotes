@@ -5,7 +5,10 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -44,11 +47,19 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
         @Override
         protected void onOpen(Level level, BlockPos pos, BlockState state) {
             level.setBlock(pos, state.setValue(SafeBlock.ACTIVATED, true), 3);
+            level.playSound(null, pos,
+                    SoundEvents.IRON_TRAPDOOR_OPEN,
+                    SoundSource.BLOCKS, 1.0f, 0.4f
+            );
         }
 
         @Override
         protected void onClose(Level level, BlockPos pos, BlockState state) {
             level.setBlock(pos, state.setValue(SafeBlock.ACTIVATED, false), 3);
+            level.playSound(null, pos,
+                    SoundEvents.IRON_TRAPDOOR_CLOSE,
+                    SoundSource.BLOCKS, 1.0f, 0.4f
+            );
         }
 
         @Override
@@ -89,6 +100,7 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
                     user.getContainerInteractionRange()
             );
         }
+
     }
 
     @Override
@@ -116,6 +128,7 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, this.items);
         output.putString("assigned_code", assignedCode);
         output.putBoolean("locked_with_keycard", lockedWithKeycard);
         output.putBoolean("locked", locked);
@@ -125,12 +138,14 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+        ContainerHelper.loadAllItems(input, this.items);
         assignedCode = input.getStringOr("assigned_code", "");
         lockedWithKeycard = input.getBooleanOr("locked_with_keycard", false);
         locked = input.getBooleanOr("locked", false);
         String uuidStr = input.getStringOr("lock_owner", "");
         lockOwner = uuidStr.isEmpty() ? null : UUID.fromString(uuidStr);
     }
+
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {

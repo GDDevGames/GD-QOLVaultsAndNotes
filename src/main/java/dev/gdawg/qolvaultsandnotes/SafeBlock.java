@@ -6,6 +6,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
@@ -75,12 +77,19 @@ public class SafeBlock extends BaseEntityBlock {
 
         if (heldItem.is(ModItems.KEY_ITEM.get())) {
             if (!heldItem.has(DataComponents.CUSTOM_NAME)) return InteractionResult.PASS;  // ← checks name exists
-            String code = heldItem.get(DataComponents.CUSTOM_NAME).getString();             // ← reads the name
+            StringBuilder code = new StringBuilder(heldItem.get(DataComponents.CUSTOM_NAME).getString());             // ← reads the name
 
-            if (!code.matches("[.\\-]+") || code.length() > 18) {
+            if (!code.toString().matches("[.\\-]+") || code.length() > 18) {
                 player.displayClientMessage(
                         Component.literal("Serial code must only contain . and -, max 18 characters."), true);
                 return InteractionResult.PASS;
+            }
+
+            if(code.length() < 18) {
+                int blankAmount = 18 - code.length();
+                for(int i =  0; i < blankAmount; i++) {
+                    code.append("-");
+                }
             }
 
             if (!level.isClientSide()) {
@@ -94,13 +103,17 @@ public class SafeBlock extends BaseEntityBlock {
                         player.displayClientMessage(Component.literal("A code is already assigned."), true);
                         return InteractionResult.PASS;
                     }
-                    be.setAssignedCode(code);
+                    be.setAssignedCode(code.toString());
                     be.setLockedWithKeycard(false);
                     be.setChanged();
                     heldItem.shrink(1);
                     player.displayClientMessage(Component.literal("Code assigned."), true);
                 }
             }
+            level.playSound(null, pos,
+                    SoundEvents.ARMOR_EQUIP_NETHERITE.value(),
+                    SoundSource.BLOCKS, 1.0f, 1.0f
+            );
             return InteractionResult.SUCCESS;
 
         } else if (heldItem.is(ModItems.KEYCARD_ITEM.get())) {
@@ -128,6 +141,10 @@ public class SafeBlock extends BaseEntityBlock {
                     player.displayClientMessage(Component.literal("Code assigned."), true);
                 }
             }
+            level.playSound(null, pos,
+                    SoundEvents.ENCHANTMENT_TABLE_USE,
+                    SoundSource.BLOCKS, 1.0f, 1.0f
+            );
             return InteractionResult.SUCCESS;
 
         } else if (heldItem.is(ModItems.LOCK_ITEM.get())) {
@@ -145,6 +162,10 @@ public class SafeBlock extends BaseEntityBlock {
                     player.displayClientMessage(Component.literal("Safe locked."), true);
                 }
             }
+            level.playSound(null, pos,
+                    SoundEvents.ARMOR_EQUIP_CHAIN.value(),
+                    SoundSource.BLOCKS, 1.0f, 1.0f
+            );
             return InteractionResult.SUCCESS;
         }
 
@@ -179,8 +200,11 @@ public class SafeBlock extends BaseEntityBlock {
             }
         } else {
             //IF we want even the player who locked the safe to have to see the code screen, then this should run. Otherwise we should remove what's underneath.
-            openSafeScreen(be, pos, player);
+            if(hasCode) openSafeScreen(be, pos, player);
+            return InteractionResult.SUCCESS;
         }
+
+        openFor(player, be);
         return InteractionResult.SUCCESS;
 
     }

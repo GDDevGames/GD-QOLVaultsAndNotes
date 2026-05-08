@@ -83,7 +83,7 @@ public class OtherKeyFunctions {
                     }
                 }
 
-                level.playSound(null, pos, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 1.0f, 1.0f);
+                level.playSound(null, pos, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 1.0f, 1.0f); // change the sound here
                 player.displayClientMessage(Component.literal("Trapped chest has been untrapped!"), true);
                 heldItem.hurtAndBreak(1, player, player.getEquipmentSlotForItem(heldItem));
             }

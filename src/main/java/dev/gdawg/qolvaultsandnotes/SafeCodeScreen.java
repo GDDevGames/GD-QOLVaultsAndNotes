@@ -38,8 +38,12 @@ public class SafeCodeScreen extends Screen {
     private static final int SEGMENT_START_X = 37;
     private static final int SEGMENT_START_Y = 51;
 
+    // Title position
+    private static final int TITLE_START_X = 50;
+    private static final int TITLE_START_Y = 10;
+
     public SafeCodeScreen(BlockPos blockPos, boolean isKeycard) {
-        super(Component.translatable("container.qolvaultsandnotes.safe_code"));
+        super(Component.translatable("container.qolvaultsandnotes.safe"));
         this.blockPos = blockPos;
         this.isKeycard = isKeycard;
     }
@@ -160,6 +164,8 @@ public class SafeCodeScreen extends Screen {
         );
     }
 
+
+
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -190,7 +196,11 @@ public class SafeCodeScreen extends Screen {
                     leftPos + 20, topPos + 30,
                     0x404020, false);
         }
+
+        // Render the title of the safe code screen
+        guiGraphics.drawString(this.font, this.title, TITLE_START_X, TITLE_START_Y, -12566464, false);
     }
+
 
     @Override
     public boolean isPauseScreen() {

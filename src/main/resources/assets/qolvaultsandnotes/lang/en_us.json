@@ -8,6 +8,5 @@
   "item.qolvaultsandnotes.key": "Key",
   "item.qolvaultsandnotes.keycard": "Keycard",
   "container.qolvaultsandnotes.vault": "Vault",
-  "container.qolvaultsandnotes.safe": "Safe",
-  "screen.qolvaultsandnotes.safe_code": "Enter Code"
+  "container.qolvaultsandnotes.safe": "Safe"
 }

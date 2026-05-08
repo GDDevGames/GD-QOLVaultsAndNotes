@@ -8,6 +8,8 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
@@ -133,11 +135,27 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
         @Override
         protected void onOpen(Level level, BlockPos pos, BlockState state) {
             level.setBlock(pos, state.setValue(VaultBlock.ACTIVATED, true), 3);
+            level.playSound(null, pos,
+                    SoundEvents.COPPER_CHEST_OPEN,
+                    SoundSource.BLOCKS, 1.0f, 0.7f
+            );
+            level.playSound(null, pos,
+                    SoundEvents.VAULT_OPEN_SHUTTER,
+                    SoundSource.BLOCKS, 0.7f, 1.0f
+            );
         }
 
         @Override
         protected void onClose(Level level, BlockPos pos, BlockState state) {
             level.setBlock(pos, state.setValue(VaultBlock.ACTIVATED, false), 3);
+            level.playSound(null, pos,
+                    SoundEvents.COPPER_CHEST_CLOSE,
+                    SoundSource.BLOCKS, 1.0f, 0.7f
+            );
+            level.playSound(null, pos,
+                    SoundEvents.VAULT_BREAK,
+                    SoundSource.BLOCKS, 0.7f, 0.7f
+            );
         }
 
         @Override

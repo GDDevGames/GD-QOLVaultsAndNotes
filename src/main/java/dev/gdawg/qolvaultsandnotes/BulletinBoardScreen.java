@@ -1,5 +1,8 @@
 package dev.gdawg.qolvaultsandnotes;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.EditBox;
@@ -11,12 +14,18 @@ import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import org.joml.Matrix3x2f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +41,10 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     static final Identifier RECIPEBOOK_BUTTON_HIGHLIGHTED_SPRITE = Identifier.withDefaultNamespace("recipe_book/button_highlighted");
     static final Identifier TEXT_FIELD_SPRITE = Identifier.withDefaultNamespace("container/anvil/text_field");
     static final Identifier TEXT_FIELD_DISABLED_SPRITE = Identifier.withDefaultNamespace("container/anvil/text_field_disabled");
+    static final Identifier LIGHT_BLUE_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/light_blue_dye.png");
+    static final Identifier LIME_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/lime_dye.png");
+    static final Identifier PINK_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/pink_dye.png");
+    static final Identifier YELLOW_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/yellow_dye.png");
 
     // --- Textures ---
     static final Identifier MAIN_BULLETIN_BOARD_LOCATION = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/bulletin_board/main_panel.png");
@@ -39,16 +52,16 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
 
     // Note textures — index matches colour int (0=yellow,1=green,2=blue,3=pink)
     static final Identifier[] NOTE_TEXTURES = {
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/yellow_note"),
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/green_note"),
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/blue_note"),
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/pink_note")
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/yellow_note.png"),
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/green_note.png"),
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/lightblue_note.png"),
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/pink_note.png")
     };
     static final Identifier[] BIG_NOTE_TEXTURES = {
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/big_yellow_note"),
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/big_green_note"),
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/big_blue_note"),
-            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/container/big_pink_note")
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/big_yellow_note.png"),
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/big_green_note.png"),
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/big_blue_note.png"),
+            Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/big_pink_note.png")
     };
 
     // --- State ---
@@ -75,10 +88,13 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     private final BulletinBoardBlockEntity be;
 
     // Note slot positions relative to main panel (adjust to match your PNG)
-    private static final int[] NOTE_SLOT_X = {8, 68, 128, 188, 8, 68, 128, 188};
-    private static final int[] NOTE_SLOT_Y = {8, 8, 8, 8, 68, 68, 68, 68};
-    private static final int NOTE_SLOT_W = 52;
-    private static final int NOTE_SLOT_H = 52;
+    private static final int[] NOTE_SLOT_X = {16, 68, 121, 174, 17, 68, 121, 174};
+    private static final int[] NOTE_SLOT_Y = {13, 13, 13, 13, 65, 65, 65, 65};
+    private static final int NOTE_SLOT_W = 50;
+    private static final int NOTE_SLOT_H = 50;
+
+    // Max amount of lines you can write in the body of a note
+    private static final int maxLines = 6; //7? or..
 
     public BulletinBoardScreen(BulletinBoardMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -100,22 +116,23 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
 
         // Title text field (side panel)
         titleField = new EditBox(this.font,
-                leftPos + 256 + 10, topPos + 20,
-                103, 12,
+                leftPos + 210, topPos + 16,
+                71, 12,
                 Component.literal("Title"));
         titleField.setCanLoseFocus(true);
         titleField.setTextColor(-1);
         titleField.setTextColorUneditable(-1);
         titleField.setInvertHighlightedTextColor(false);
         titleField.setBordered(false);
-        titleField.setMaxLength(50);
+        titleField.setMaxLength(12);
         titleField.setValue("");
-        titleField.visible = false;
+        titleField.visible = true;
+        titleField.active = true;
         addRenderableWidget(titleField);
 
         // Toggle extended button (always visible)
         BulletinBoardSpriteScreenButton toggleBtn = new BulletinBoardSpriteScreenButton(
-                this.leftPos + 233, this.topPos + 54,
+                this.leftPos + 231, this.topPos + 54,
                 RECIPEBOOK_BUTTON_SPRITE, Component.literal("")
         ) {
             @Override
@@ -137,33 +154,43 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         addRenderableWidget(toggleBtn);
 
         // Pin button (redstone torch)
-        pinButton = new BulletinBoardScreenButton(0, 0, Component.literal("Pin")) {
+        pinButton = new BulletinBoardScreenButton(0, 0, 18, 18, Component.literal("Pin")) {
             @Override
             public void onPress(InputWithModifiers input) {
                 onPinClicked();
             }
             @Override
             protected void renderIcon(GuiGraphics g) {
-                g.renderFakeItem(new ItemStack(Items.REDSTONE_TORCH), getX() + 2, getY());
+                g.renderFakeItem(new ItemStack(Items.REDSTONE_TORCH), getX() + 1, getY());
             }
+
+            @Override
+            public void playDownSound(SoundManager soundManager) {
+                //super.playDownSound(soundManager);
+            }
+
         };
-        addSidePanelButton(pinButton, 11, 128);
+        addSidePanelButton(pinButton, 12, 129);
 
         // Unpin button (copper torch)
-        unpinButton = new BulletinBoardScreenButton(0, 0, Component.literal("Unpin")) {
+        unpinButton = new BulletinBoardScreenButton(0, 0, 18, 18, Component.literal("Unpin")) {
             @Override
             public void onPress(InputWithModifiers input) {
                 onUnpinClicked();
             }
             @Override
             protected void renderIcon(GuiGraphics g) {
-                g.renderFakeItem(new ItemStack(Items.COPPER_TORCH), getX() + 2, getY());
+                g.renderFakeItem(new ItemStack(Items.COPPER_TORCH), getX() + 1, getY());
+            }
+            @Override
+            public void playDownSound(SoundManager soundManager) {
+                // super.playDownSound(soundManager);
             }
         };
-        addSidePanelButton(unpinButton, 33, 128);
+        addSidePanelButton(unpinButton, 33, 129);
 
         // Colour cycle button
-        colourButton = new BulletinBoardScreenButton(0, 0, Component.literal("Colour")) {
+        colourButton = new BulletinBoardScreenButton(0, 0, 14, 14, Component.literal("Colour")) {
             @Override
             public void onPress(InputWithModifiers input) {
                 currentColour = (currentColour + 1) % 4;
@@ -171,16 +198,20 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             @Override
             protected void renderIcon(GuiGraphics g) {
                 // Show the current colour dye item
-                ItemStack dye = switch (currentColour) {
-                    case 1 -> new ItemStack(Items.GREEN_DYE);
-                    case 2 -> new ItemStack(Items.BLUE_DYE);
-                    case 3 -> new ItemStack(Items.PINK_DYE);
-                    default -> new ItemStack(Items.YELLOW_DYE);
-                };
-                g.renderFakeItem(dye, getX() + 2, getY());
+                switch (currentColour) {
+                    case 1 -> g.blit(RenderPipelines.GUI_TEXTURED, LIME_DYE_SPRITE, getX() + 1, getY(), 0, 0, 12, 12, 16, 16, 16, 16);
+                    case 2 -> g.blit(RenderPipelines.GUI_TEXTURED, LIGHT_BLUE_DYE_SPRITE, getX() + 1, getY(), 0, 0, 12, 12, 16, 16, 16, 16);
+                    case 3 -> g.blit(RenderPipelines.GUI_TEXTURED, PINK_DYE_SPRITE, getX() + 1, getY(), 0, 0, 12, 12, 16, 16, 16, 16);
+                    default -> g.blit(RenderPipelines.GUI_TEXTURED, YELLOW_DYE_SPRITE, getX() + 1, getY(), 0, 0, 12, 12, 16, 16, 16, 16);
+                }
+            }
+
+            @Override
+            public void playDownSound(SoundManager soundManager) {
+                super.playDownSound(soundManager);
             }
         };
-        addSidePanelButton(colourButton, 103, 10); // top right near title field
+        addSidePanelButton(colourButton, 99, 13); // top right near title field
 
         updateSidePanelVisibility();
     }
@@ -209,6 +240,10 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         selectedNoteSlot = slot;
         isNewNote = false;
 
+        Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0F)
+        );
+
         // No button selected after pinning
         pinButton.setSelected(false);
         unpinButton.setSelected(false);
@@ -223,6 +258,10 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         currentColour = 0;
         pinButton.setSelected(false);
         unpinButton.setSelected(false);
+
+        Minecraft.getInstance().getSoundManager().play(
+                SimpleSoundInstance.forUI(SoundEvents.SHIELD_BLOCK, 2.0F)
+        );
     }
 
     private void onNoteSlotClicked(int slot) {
@@ -284,7 +323,7 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
                     && mouseY >= ny && mouseY < ny + NOTE_SLOT_H) {
                 if (!extendedMenu) toggleExtendedMenu();
                 onNoteSlotClicked(i);
-                return true;
+                return super.mouseClicked(event, doubleClick);
             }
         }
 
@@ -300,9 +339,28 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
                     && mouseY >= bodyY && mouseY < bodyY + bodyH) {
                 editingBody = true;
                 titleField.setFocused(false);
-                return true;
+                return super.mouseClicked(event, doubleClick);
             } else {
                 editingBody = false;
+            }
+
+            //everything below is an ugly solution to something internal we have to fish out and use naturally.
+            int titleX = titleField.getX();
+            int titleY = titleField.getY();
+            int titleW = 80;
+            int titleH = 14;
+
+            if (mouseX >= titleX && mouseX < titleX + titleW
+                    && mouseY >= titleY && mouseY < titleY + titleH) {
+                this.setFocused(titleField);
+                /*if(titleField.mouseClicked(event, doubleClick)) {
+
+                }*/
+                /*titleField.setFocused(true);
+                titleField.setEditable(true);
+                titleField.active = true;
+                titleField.mouseClicked(event, doubleClick);*/
+                return true;
             }
         }
         return super.mouseClicked(event, doubleClick);
@@ -314,8 +372,8 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             return handleBodyKeyPress(keyEvent);
         }
         if (titleField.isFocused()) {
-            titleField.keyPressed(keyEvent);
-            return true;
+            System.out.println("trying to type");
+            return titleField.keyPressed(keyEvent);
         }
         return super.keyPressed(keyEvent);
     }
@@ -327,10 +385,21 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             if (event.isAllowedChatCharacter()) {
                 String c = String.valueOf(Character.toChars(codepoint));
                 String line = bodyLines.get(bodyCaretLine);
-                if (line.length() < 20) {
-                    bodyLines.set(bodyCaretLine,
-                            line.substring(0, bodyCaretPos) + c + line.substring(bodyCaretPos));
+                String newLine = line.substring(0, bodyCaretPos) + c + line.substring(bodyCaretPos);
+                boolean lastLine = false;
+
+
+                // Check if the new line fits within the note width (adjust 70 to match your note's text area)
+                if (font.width(newLine) <= 74) {
+                    bodyLines.set(bodyCaretLine, newLine);
                     bodyCaretPos++;
+                } else if (bodyCaretLine < maxLines) {
+                    // Auto wrap — commit current line and move character to next line
+                    bodyLines.set(bodyCaretLine, line.substring(0, bodyCaretPos));
+                    bodyCaretLine++;
+                    String rest = c + line.substring(bodyCaretPos);
+                    bodyLines.set(bodyCaretLine, rest);
+                    bodyCaretPos = 1;
                 }
             }
             return true;
@@ -358,12 +427,12 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             return true;
         }
         if (key == 257 || key == 335) { // Enter
-            if (bodyCaretLine < 9) {
+            if (bodyCaretLine < maxLines) {
                 String rest = line.substring(bodyCaretPos);
                 bodyLines.set(bodyCaretLine, line.substring(0, bodyCaretPos));
                 bodyCaretLine++;
                 bodyLines.add(bodyCaretLine, rest);
-                if (bodyLines.size() > 10) bodyLines.remove(10);
+                if (bodyLines.size() > maxLines + 1) bodyLines.remove(maxLines + 1);
                 bodyCaretPos = 0;
             }
             return true;
@@ -381,7 +450,7 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             bodyCaretPos = Math.min(bodyCaretPos, bodyLines.get(bodyCaretLine).length());
             return true;
         }
-        if (key == 264 && bodyCaretLine < 9) { // Down
+        if (key == 264 && bodyCaretLine < maxLines) { // Down
             bodyCaretLine++;
             bodyCaretPos = Math.min(bodyCaretPos, bodyLines.get(bodyCaretLine).length());
             return true;
@@ -406,7 +475,7 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
 
             // Text field background behind title
             g.blitSprite(RenderPipelines.GUI_TEXTURED, TEXT_FIELD_SPRITE,
-                    startX + 256 + 10, startY + 18, 103, 16);
+                    startX + 256 + 15, startY + 13, 80, 14);
 
             // Ink and paper counts
             g.renderFakeItem(new ItemStack(Items.INK_SAC), startX + 256 + 77, startY + 130);
@@ -445,38 +514,41 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
                 String title = be.getNoteTitle(i);
                 if (!title.isEmpty()) {
                     String display = title.length() > 7 ? title.substring(0, 7) : title;
-                    g.drawString(font, display, nx + 2, ny + 4, 0x404020, false);
+                    g.drawString(font, display, (nx + 25) - font.width(display) / 2 , ny + 4, -16777216, false);
                 }
             }
         }
 
         // Draw big note preview in side panel
         if (extendedMenu) {
-            int sidePanelX = (this.width - (256 + 128)) / 2 + 256;
-            int sidePanelY = (this.height - 128) / 2;
-            int noteX = sidePanelX + 10;
-            int noteY = sidePanelY + 36;
+            int totalWidth = 256 + 128;
+
+            int sidePanelX = (this.width / 2) + 90;
+            int sidePanelY = (this.height / 2) - 32;
+            int noteX = sidePanelX;
+            int noteY = sidePanelY;
             g.blit(RenderPipelines.GUI_TEXTURED,
                     BIG_NOTE_TEXTURES[currentColour],
-                    noteX, noteY, 0, 0, 108, 90, 108, 90);
+                    noteX, noteY, 0, 0, 80, 80, 150, 150, 150, 150);
+
 
             // Draw title on big note
             String title = titleField.getValue();
             if (!title.isEmpty()) {
-                g.drawString(font, title, noteX + 4, noteY + 4, 0x404020, false);
+                g.drawString(font, title, (noteX + 40) - font.width(title) / 2, noteY + 4, -16777216, false);
             }
 
             // Draw body lines on big note
             for (int i = 0; i < bodyLines.size(); i++) {
                 String line = bodyLines.get(i);
                 if (!line.isEmpty()) {
-                    g.drawString(font, line, noteX + 4, noteY + 16 + i * 9, 0x404020, false);
+                    g.drawString(font, line, noteX + 4, noteY + 16 + i * 9, -12303310, false);
                 }
                 // Draw caret
                 if (editingBody && i == bodyCaretLine) {
                     int caretX = noteX + 4 + font.width(line.substring(0, bodyCaretPos));
                     int caretY = noteY + 16 + i * 9;
-                    g.fill(caretX, caretY, caretX + 1, caretY + 9, 0xFF404020);
+                    g.fill(caretX, caretY, caretX + 1, caretY + 9, -12303310);
                 }
             }
         }
@@ -542,6 +614,9 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
 
         protected BulletinBoardScreenButton(int x, int y, Component message) {
             super(x, y, 20, 20, message);
+        }
+        protected BulletinBoardScreenButton(int x, int y, int sizeX, int sizeY, Component message) {
+            super(x, y, sizeX, sizeY, message);
         }
         public void renderContents(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
             Identifier id;

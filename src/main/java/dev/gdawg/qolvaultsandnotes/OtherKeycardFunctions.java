@@ -75,7 +75,10 @@ public class OtherKeycardFunctions {
                     }
                     tag.remove(storeKey);
                     heldItem.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                    level.playSound(null, pos, SoundEvents.PORTAL_TRIGGER, SoundSource.BLOCKS, 0.5f, 1.5f);
+                    level.playSound(null, pos,
+                            SoundEvents.BEACON_ACTIVATE,
+                            SoundSource.BLOCKS, 0.8f, 1.0f
+                    );
                     player.displayClientMessage(Component.literal("Portal restored."), true);
                     heldItem.hurtAndBreak(1, player, player.getEquipmentSlotForItem(heldItem));
 
@@ -102,7 +105,10 @@ public class OtherKeycardFunctions {
                     }
                     tag.put(storeKey, stored);
                     heldItem.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-                    level.playSound(null, pos, SoundEvents.PORTAL_TRIGGER, SoundSource.BLOCKS, 0.5f, 1.5f);
+                    level.playSound(null, pos,
+                            SoundEvents.BEACON_DEACTIVATE,
+                            SoundSource.BLOCKS, 0.8f, 1.0f
+                    );
                     player.displayClientMessage(Component.literal("Portal toggled off."), true);
                     heldItem.hurtAndBreak(1, player, player.getEquipmentSlotForItem(heldItem));
 
@@ -117,14 +123,21 @@ public class OtherKeycardFunctions {
                         BlockState fireState = BaseFireBlock.getState(level, insidePos);
                         level.setBlock(insidePos, fireState, 11);
                         level.gameEvent(player, GameEvent.BLOCK_PLACE, insidePos);
-                        level.playSound(null, pos, SoundEvents.PORTAL_TRIGGER, SoundSource.BLOCKS, 0.5f, 1.5f);
                         player.displayClientMessage(Component.literal("Portal lit."), true);
+                        level.playSound(null, pos,
+                                SoundEvents.BEACON_ACTIVATE,
+                                SoundSource.BLOCKS, 0.8f, 1.0f
+                        );
                         heldItem.hurtAndBreak(1, player, player.getEquipmentSlotForItem(heldItem));
                     } else {
                         player.displayClientMessage(Component.literal("No valid portal frame found."), true);
                     }
                 }
             }
+            level.playSound(null, pos,
+                    SoundEvents.TRIDENT_RETURN,
+                    SoundSource.BLOCKS, 1.2f, 0.5f
+            );
             return InteractionResult.SUCCESS;
         }
 
@@ -152,7 +165,11 @@ public class OtherKeycardFunctions {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    player.displayClientMessage(Component.literal("Piston retracted."), true);
+                    level.playSound(null, pos,
+                            SoundEvents.PISTON_CONTRACT,
+                            SoundSource.BLOCKS, 0.8f, 1.0f
+                    );
+                    player.displayClientMessage(Component.literal("Piston contracted."), true);
                 } else {
                     LOCKED_PISTONS.add(pos);
                     try {
