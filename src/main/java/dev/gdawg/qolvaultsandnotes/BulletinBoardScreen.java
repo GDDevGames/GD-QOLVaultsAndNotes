@@ -1,8 +1,9 @@
+/// ----- BulletinBoardScreen -----
+/// GUI for the bulletin board.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.EditBox;
@@ -17,22 +18,18 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
-import org.joml.Matrix3x2f;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMenu> {
-
-    // --- Sprites ---
     static final Identifier BUTTON_DISABLED_SPRITE = Identifier.withDefaultNamespace("container/beacon/button_disabled");
     static final Identifier BUTTON_SELECTED_SPRITE = Identifier.withDefaultNamespace("container/beacon/button_selected");
     static final Identifier BUTTON_HIGHLIGHTED_SPRITE = Identifier.withDefaultNamespace("container/beacon/button_highlighted");
@@ -40,17 +37,15 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     static final Identifier RECIPEBOOK_BUTTON_SPRITE = Identifier.withDefaultNamespace("recipe_book/button");
     static final Identifier RECIPEBOOK_BUTTON_HIGHLIGHTED_SPRITE = Identifier.withDefaultNamespace("recipe_book/button_highlighted");
     static final Identifier TEXT_FIELD_SPRITE = Identifier.withDefaultNamespace("container/anvil/text_field");
-    static final Identifier TEXT_FIELD_DISABLED_SPRITE = Identifier.withDefaultNamespace("container/anvil/text_field_disabled");
     static final Identifier LIGHT_BLUE_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/light_blue_dye.png");
     static final Identifier LIME_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/lime_dye.png");
     static final Identifier PINK_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/pink_dye.png");
     static final Identifier YELLOW_DYE_SPRITE = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/yellow_dye.png");
 
-    // --- Textures ---
     static final Identifier MAIN_BULLETIN_BOARD_LOCATION = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/bulletin_board/main_panel.png");
     static final Identifier SIDE_BULLETIN_BOARD_LOCATION = Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/bulletin_board/side_panel.png");
 
-    // Note textures — index matches colour int (0=yellow,1=green,2=blue,3=pink)
+    // Note textures Index matches color int (0 = yellow, 1 = green, 2 = blue, 3 = pink)
     static final Identifier[] NOTE_TEXTURES = {
             Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/yellow_note.png"),
             Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/green_note.png"),
@@ -64,21 +59,20 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             Identifier.fromNamespaceAndPath(QOLVaultsAndNotes.MODID, "textures/gui/sprites/bulletin_board/big_pink_note.png")
     };
 
-    // --- State ---
     public boolean extendedMenu = false;
-    private int selectedNoteSlot = -1;  // which note slot is selected (-1 = new note)
+    private int selectedNoteSlot = 0;  // which note slot is selected (-1 = new note)
     private boolean isNewNote = true;   // true = writing new note, false = viewing existing
-    private int currentColour = 0;      // 0=yellow,1=green,2=blue,3=pink
+    private int currentColour = 0;      // 0 = yellow, 1 = green, 2 = blue, 3 = pink
     private String originalTitle = "";  // for reverting changes
     private String originalBody = "";
 
-    // --- Widgets ---
     private BulletinBoardSpriteScreenButton toggleExtendedButton;
+    private BulletinBoardSpriteScreenButton bigNoteButton;
     private BulletinBoardScreenButton pinButton;
     private BulletinBoardScreenButton unpinButton;
     private BulletinBoardScreenButton colourButton;
     private EditBox titleField;
-    // Book-style body lines
+
     private final List<String> bodyLines = new ArrayList<>();
     private int bodyCaretLine = 0;
     private int bodyCaretPos = 0;
@@ -87,21 +81,29 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     private final List<BulletinBoardScreenButton> sidePanelButtons = new ArrayList<>();
     private final BulletinBoardBlockEntity be;
 
-    // Note slot positions relative to main panel (adjust to match your PNG)
+    // Note slot positions relative to main panel
     private static final int[] NOTE_SLOT_X = {16, 68, 121, 174, 17, 68, 121, 174};
     private static final int[] NOTE_SLOT_Y = {13, 13, 13, 13, 65, 65, 65, 65};
     private static final int NOTE_SLOT_W = 50;
     private static final int NOTE_SLOT_H = 50;
 
-    // Max amount of lines you can write in the body of a note
-    private static final int maxLines = 6; //7? or..
+    // Position of big note on side panel
+    private static int BIG_NOTE_X;
+    private static int BIG_NOTE_Y;
 
+    private static final int maxLines = 6; //Daniel: 7? or..
+
+    private static boolean shouldConsumeInk = false;
+    private static boolean shouldConsumePaper = false;
+    private static boolean shouldDeleteNote = false;
+
+    // --- CONSTRUCTOR ---
     public BulletinBoardScreen(BulletinBoardMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 256;
         this.imageHeight = 128;
+
         this.be = menu.blockEntity;
-        // Init body lines
         for (int i = 0; i < 10; i++) bodyLines.add("");
     }
 
@@ -114,11 +116,15 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         super.init();
         sidePanelButtons.clear();
 
-        // Title text field (side panel)
+        BIG_NOTE_X = (this.width / 2) + 90;
+        BIG_NOTE_Y = (this.height) / 2 - 32;
+
+        // Title text field in the side panel
         titleField = new EditBox(this.font,
                 leftPos + 210, topPos + 16,
                 71, 12,
-                Component.literal("Title"));
+                Component.literal("Title")
+        );
         titleField.setCanLoseFocus(true);
         titleField.setTextColor(-1);
         titleField.setTextColorUneditable(-1);
@@ -130,11 +136,12 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         titleField.active = true;
         addRenderableWidget(titleField);
 
-        // Toggle extended button (always visible)
+        // Button for side panel
         BulletinBoardSpriteScreenButton toggleBtn = new BulletinBoardSpriteScreenButton(
                 this.leftPos + 231, this.topPos + 54,
                 RECIPEBOOK_BUTTON_SPRITE, Component.literal("")
-        ) {
+        )
+        {
             @Override
             public void onPress(InputWithModifiers input) {
                 toggleExtendedMenu();
@@ -150,10 +157,11 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             @Override
             protected void renderIcon(GuiGraphics g) {}
         };
+
         toggleExtendedButton = toggleBtn;
         addRenderableWidget(toggleBtn);
 
-        // Pin button (redstone torch)
+        // Pin button
         pinButton = new BulletinBoardScreenButton(0, 0, 18, 18, Component.literal("Pin")) {
             @Override
             public void onPress(InputWithModifiers input) {
@@ -161,35 +169,40 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             }
             @Override
             protected void renderIcon(GuiGraphics g) {
+                // Redstone torch icon
                 g.renderFakeItem(new ItemStack(Items.REDSTONE_TORCH), getX() + 1, getY());
             }
 
             @Override
             public void playDownSound(SoundManager soundManager) {
-                //super.playDownSound(soundManager);
+                // This is meant to be empty because it overrides the default UI sound
             }
-
         };
         addSidePanelButton(pinButton, 12, 129);
 
-        // Unpin button (copper torch)
+        // Unpin button
         unpinButton = new BulletinBoardScreenButton(0, 0, 18, 18, Component.literal("Unpin")) {
             @Override
             public void onPress(InputWithModifiers input) {
+                if (shouldDeleteNote) {
+                    be.clearNote(selectedNoteSlot);
+                    shouldDeleteNote = false;
+                }
                 onUnpinClicked();
             }
             @Override
             protected void renderIcon(GuiGraphics g) {
+                // Copper torch icon
                 g.renderFakeItem(new ItemStack(Items.COPPER_TORCH), getX() + 1, getY());
             }
             @Override
             public void playDownSound(SoundManager soundManager) {
-                // super.playDownSound(soundManager);
+                // This is meant to be empty because it overrides the default UI sound
             }
         };
         addSidePanelButton(unpinButton, 33, 129);
 
-        // Colour cycle button
+        // Colour button
         colourButton = new BulletinBoardScreenButton(0, 0, 14, 14, Component.literal("Colour")) {
             @Override
             public void onPress(InputWithModifiers input) {
@@ -205,14 +218,47 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
                     default -> g.blit(RenderPipelines.GUI_TEXTURED, YELLOW_DYE_SPRITE, getX() + 1, getY(), 0, 0, 12, 12, 16, 16, 16, 16);
                 }
             }
-
+            // Alvin: IntelliJ keeps complaining about the usage of "colour" and not "color".
+            // We've used the british ending in other places, so I don't know why it keeps complaining
             @Override
             public void playDownSound(SoundManager soundManager) {
                 super.playDownSound(soundManager);
             }
         };
-        addSidePanelButton(colourButton, 99, 13); // top right near title field
+        addSidePanelButton(colourButton, 99, 13);
 
+        // Toggle extended button (always visible)
+        bigNoteButton = new BulletinBoardSpriteScreenButton(
+                BIG_NOTE_X, BIG_NOTE_Y, 80, 80,
+                null, Component.literal("")
+        )
+        {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                editingBody = true;
+            }
+
+            @Override
+            public boolean isFocused() {
+                return super.isFocused();
+            }
+
+
+            @Override
+            public void renderContents(GuiGraphics g, int mx, int my, float pt) {
+                Identifier id = isHoveredOrFocused()
+                        ? RECIPEBOOK_BUTTON_HIGHLIGHTED_SPRITE
+                        : RECIPEBOOK_BUTTON_SPRITE;
+                g.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), 20, 18);
+            }
+            @Override
+            protected void renderIcon(GuiGraphics g) {}
+        };
+
+        toggleExtendedButton = toggleBtn;
+        addRenderableWidget(toggleBtn);
+
+        updateToggleButtonPosition();
         updateSidePanelVisibility();
     }
 
@@ -221,37 +267,66 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
     // -----------------------------------------------------------------------
 
     private void onPinClicked() {
+        Player player = Minecraft.getInstance().player;
         String title = titleField.getValue();
         String body = String.join("\n", bodyLines).stripTrailing();
 
-        if (title.isEmpty() && body.isEmpty()) return;
+        if (title.isEmpty() && body.isEmpty()) {
+            return;
+        }
+        else {
+            if (getMenu().blockEntity.getItem(0).getCount() >= 1) {
+                if (shouldConsumePaper) {
+                    isNewNote = true;
+                    if(getMenu().blockEntity.getItem(1).getCount() >= 4){
+                        shouldConsumePaper = false;
+                    }
+                    else {
+                        player.displayClientMessage(Component.literal("This bulletin board doesn't have enough paper to pin a note"), true);
+                        return;
+                    }
 
-        int slot = selectedNoteSlot >= 0 ? selectedNoteSlot : be.getNextFreeSlot();
-        if (slot < 0) return; // no free slots
+                } else {
+                    isNewNote = false;
+                }
+                int slot = selectedNoteSlot >= 0 ? selectedNoteSlot : be.getNextFreeSlot();
+                if (slot < 0) return; // no free slots
 
-        // Send packet to server to save note and consume resources
-        ClientPacketDistributor.sendToServer(new BulletinBoardPinPacket(
-                be.getBlockPos(), slot, title, body, currentColour, isNewNote));
+                // Send packet to server to save note and consume resources
+                ClientPacketDistributor.sendToServer(new BulletinBoardPinPacket(
+                        be.getBlockPos(), slot, title, body, currentColour, isNewNote));
 
-        // Optimistic client update
-        be.setNote(slot, title, body, currentColour);
-        originalTitle = title;
-        originalBody = body;
-        selectedNoteSlot = slot;
-        isNewNote = false;
+                // Optimistic client update
+                be.setNote(slot, title, body, currentColour);
+                originalTitle = title;
+                originalBody = body;
+                selectedNoteSlot = slot;
+                isNewNote = false;
 
-        Minecraft.getInstance().getSoundManager().play(
-                SimpleSoundInstance.forUI(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0F)
-        );
+                Minecraft.getInstance().getSoundManager().play(
+                        SimpleSoundInstance.forUI(SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0F)
+                );
 
-        // No button selected after pinning
-        pinButton.setSelected(false);
-        unpinButton.setSelected(false);
+                // No button selected after pinning
+                pinButton.setSelected(false);
+                unpinButton.setSelected(false);
+                if(shouldConsumeInk) {
+                    shouldConsumeInk = false;
+                }
+
+            }
+            else {
+                player.displayClientMessage(Component.literal("This bulletin board doesn't have enough ink to pin a note"), true);
+            }
+        }
     }
 
     private void onUnpinClicked() {
+        // If no note is selected, create new note. (the side panel note preview should start off as empty)
+        // If a note is selected, unpin (clear) it. clearNote() from be.
         // Clear editor for a new note
-        selectedNoteSlot = -1;
+        shouldConsumePaper = true;
+        selectedNoteSlot = be.getNextFreeSlot();
         isNewNote = true;
         titleField.setValue("");
         clearBody();
@@ -269,6 +344,9 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             // Empty slot — treat as new note
             onUnpinClicked();
             return;
+        }
+        else {
+            shouldDeleteNote = true;
         }
         // Load note into editor
         selectedNoteSlot = slot;
@@ -327,9 +405,11 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             }
         }
 
+        if(!bigNoteButton.mouseClicked(event, doubleClick)) editingBody = false;
+
         // Check if clicking body area
         if (extendedMenu) {
-            int sidePanelX = (this.width - (256 + 128)) / 2 + 256;
+            /*int sidePanelX = (this.width - (256 + 128)) / 2 + 256;
             int sidePanelY = (this.height - 128) / 2;
             int bodyX = sidePanelX + 10;
             int bodyY = sidePanelY + 40;
@@ -342,10 +422,10 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
                 return super.mouseClicked(event, doubleClick);
             } else {
                 editingBody = false;
-            }
+            }*/
 
             //everything below is an ugly solution to something internal we have to fish out and use naturally.
-            int titleX = titleField.getX();
+            /*int titleX = titleField.getX();
             int titleY = titleField.getY();
             int titleW = 80;
             int titleH = 14;
@@ -353,26 +433,31 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             if (mouseX >= titleX && mouseX < titleX + titleW
                     && mouseY >= titleY && mouseY < titleY + titleH) {
                 this.setFocused(titleField);
-                /*if(titleField.mouseClicked(event, doubleClick)) {
+                if(titleField.mouseClicked(event, doubleClick)) {
 
-                }*/
-                /*titleField.setFocused(true);
+                }
+                titleField.setFocused(true);
                 titleField.setEditable(true);
                 titleField.active = true;
-                titleField.mouseClicked(event, doubleClick);*/
+                titleField.mouseClicked(event, doubleClick);
                 return true;
-            }
+            }*/
         }
         return super.mouseClicked(event, doubleClick);
     }
 
     @Override
     public boolean keyPressed(KeyEvent keyEvent) {
+        if (keyEvent.input() == 256) {
+            minecraft.player.closeContainer();
+            return true;
+        }
         if (editingBody) {
+            shouldConsumeInk = true;
             return handleBodyKeyPress(keyEvent);
         }
         if (titleField.isFocused()) {
-            System.out.println("trying to type");
+            shouldConsumeInk = true;
             return titleField.keyPressed(keyEvent);
         }
         return super.keyPressed(keyEvent);
@@ -513,8 +598,16 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
                 // Draw title on note
                 String title = be.getNoteTitle(i);
                 if (!title.isEmpty()) {
-                    String display = title.length() > 7 ? title.substring(0, 7) : title;
-                    g.drawString(font, display, (nx + 25) - font.width(display) / 2 , ny + 4, -16777216, false);
+                    String display1 = title.length() > 6 ? title.substring(0, 6) : title;
+                    String display2 = "";
+                    int firstY = 20;
+                    if(title.length() > 6)
+                    {
+                        display2 = title.substring(6, title.length());
+                        firstY = 15;
+                    }
+                    g.drawString(font, display1, (nx + 25) - font.width(display1) / 2 , ny + firstY, -16777216, false);
+                    g.drawString(font, display2, (nx + 25) - font.width(display2) / 2 , ny + 15 + font.lineHeight, -16777216, false);
                 }
             }
         }
@@ -523,31 +616,27 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
         if (extendedMenu) {
             int totalWidth = 256 + 128;
 
-            int sidePanelX = (this.width / 2) + 90;
-            int sidePanelY = (this.height / 2) - 32;
-            int noteX = sidePanelX;
-            int noteY = sidePanelY;
             g.blit(RenderPipelines.GUI_TEXTURED,
                     BIG_NOTE_TEXTURES[currentColour],
-                    noteX, noteY, 0, 0, 80, 80, 150, 150, 150, 150);
+                    BIG_NOTE_X, BIG_NOTE_Y, 0, 0, 80, 80, 150, 150, 150, 150);
 
 
             // Draw title on big note
             String title = titleField.getValue();
             if (!title.isEmpty()) {
-                g.drawString(font, title, (noteX + 40) - font.width(title) / 2, noteY + 4, -16777216, false);
+                g.drawString(font, title, (BIG_NOTE_X + 40) - font.width(title) / 2, BIG_NOTE_Y + 4, -16777216, false);
             }
 
             // Draw body lines on big note
             for (int i = 0; i < bodyLines.size(); i++) {
                 String line = bodyLines.get(i);
                 if (!line.isEmpty()) {
-                    g.drawString(font, line, noteX + 4, noteY + 16 + i * 9, -12303310, false);
+                    g.drawString(font, line, BIG_NOTE_X + 4, BIG_NOTE_Y + 16 + i * 9, -12303310, false);
                 }
                 // Draw caret
                 if (editingBody && i == bodyCaretLine) {
-                    int caretX = noteX + 4 + font.width(line.substring(0, bodyCaretPos));
-                    int caretY = noteY + 16 + i * 9;
+                    int caretX = BIG_NOTE_X + 4 + font.width(line.substring(0, bodyCaretPos));
+                    int caretY = BIG_NOTE_Y + 16 + i * 9;
                     g.fill(caretX, caretY, caretX + 1, caretY + 9, -12303310);
                 }
             }
@@ -580,10 +669,10 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             int totalWidth = 256 + 128;
             int startX = (this.width - totalWidth) / 2;
             int startY = (this.height - 128) / 2;
-            toggleExtendedButton.setX(startX + 230);
+            toggleExtendedButton.setX(startX + 231);
             toggleExtendedButton.setY(startY + 54);
         } else {
-            toggleExtendedButton.setX(this.leftPos + 230);
+            toggleExtendedButton.setX(this.leftPos + 231);
             toggleExtendedButton.setY(this.topPos + 54);
         }
     }
@@ -653,6 +742,12 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
             this.sprite = sprite;
         }
 
+        protected BulletinBoardSpriteScreenButton(int x, int y, int sizeX, int sizeY, Identifier sprite, Component message) {
+            super(x, y, sizeX, sizeY, message);
+            this.setTooltip(Tooltip.create(message));
+            this.sprite = sprite;
+        }
+
         @Override
         protected void renderIcon(GuiGraphics g) {
             g.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, getX() + 2, getY() + 2, 16, 16);
@@ -660,5 +755,10 @@ public class BulletinBoardScreen extends AbstractContainerScreen<BulletinBoardMe
 
         @Override
         public void onPress(InputWithModifiers input) {}
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 }

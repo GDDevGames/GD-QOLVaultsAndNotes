@@ -1,4 +1,6 @@
-// OtherKeyFunctions.java
+/// ----- OtherKeyFunctions -----
+/// Misc. key functions (toggling iron doors & untrapping chests)
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
@@ -53,29 +55,27 @@ public class OtherKeyFunctions {
         // --- TRAPPED CHEST ---
         if (state.is(Blocks.TRAPPED_CHEST)) {
             if (!level.isClientSide()) {
-                // 1. Get the block entity FIRST before touching the block
                 BlockEntity be = level.getBlockEntity(pos);
 
                 if (!(be instanceof TrappedChestBlockEntity oldBE)) {
-                    return InteractionResult.PASS; // Safety: no valid BE found
+                    // If no valid block entity was found, just exit
+                    return InteractionResult.PASS;
                 }
 
-                // 2. Save the inventory contents
+                // Copy the items from the chest and save them temporarily
                 NonNullList<ItemStack> savedItems = NonNullList.withSize(oldBE.getContainerSize(), ItemStack.EMPTY);
                 for (int i = 0; i < oldBE.getContainerSize(); i++) {
-                    savedItems.set(i, oldBE.getItem(i).copy()); // .copy() is critical!
+                    savedItems.set(i, oldBE.getItem(i).copy());
                 }
 
-                // 3. Build the new blockstate, mirroring facing AND waterlogged if present
+                // Create a normal chest and replace the old block
                 BlockState normalChest = Blocks.CHEST.defaultBlockState()
                         .setValue(BlockStateProperties.HORIZONTAL_FACING,
                                 state.getValue(BlockStateProperties.HORIZONTAL_FACING));
-
-                // 4. Replace the block (this destroys the old BE)
                 oldBE.clearContent();
                 level.setBlock(pos, normalChest, 3);
 
-                // 5. Restore inventory into the new ChestBlockEntity
+                // Restore the items into the new chest
                 BlockEntity newBe = level.getBlockEntity(pos);
                 if (newBe instanceof ChestBlockEntity newBE) {
                     for (int i = 0; i < savedItems.size(); i++) {
@@ -83,12 +83,15 @@ public class OtherKeyFunctions {
                     }
                 }
 
-                level.playSound(null, pos, SoundEvents.CHEST_OPEN, SoundSource.BLOCKS, 1.0f, 1.0f); // change the sound here
+                level.playSound(null, pos,
+                        SoundEvents.LEVER_CLICK, SoundSource.BLOCKS,
+                        1.0f, 1.0f
+                );
                 player.displayClientMessage(Component.literal("Trapped chest has been untrapped!"), true);
                 heldItem.hurtAndBreak(1, player, player.getEquipmentSlotForItem(heldItem));
             }
             return InteractionResult.SUCCESS;
-            }
+        }
         return InteractionResult.PASS;
     }
 }

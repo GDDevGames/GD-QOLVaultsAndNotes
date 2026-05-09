@@ -1,25 +1,30 @@
+# Projektnamn
+QOL Vaults And Notes
 
-Installation information
-=======
+## Deltagare
+* Theodor Hedhman - Programmering, projekt ledare & managerare
+* Daniel Laxén - Programmering, Github
+* Alvin Hansson - Programmering, grafik
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+## Beskrivning
+Minecraft mod som lägger till kassavalv, skåp och anslagstavlor i spelet.
+Kassavalven och skåpen kan låsas med antingen en PIN-kod eller en 18-siffrig kombination.
+Anslagstavlorna låter användare lägga upp enkla reklamer eller anslag för sig själv eller för andra att läsa.
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+## Kom igång
+### Förutsättningar
+* Minecraft 1.21.11 
+* Neoforge 21.11+
+* Java 21
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+### Installation
+0. Se till att du har den senaste Neoforge versionen för Minecraft 1.21.11.
+1. Ladda ned .jar filen.
+2. Lägg filen i `%AppData%/Roaming/.minecraft/mods`.
+3. Klar!
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+### Köra programmet
+Moddet laddas automatiskt av Neoforge. 
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+## Externt material
+* 

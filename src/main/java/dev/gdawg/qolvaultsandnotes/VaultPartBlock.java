@@ -5,8 +5,10 @@ package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,6 +21,7 @@ public class VaultPartBlock extends Block {
     public static final IntegerProperty OFFSET_Y = IntegerProperty.create("offset_y", 0, 1);
     public static final IntegerProperty OFFSET_Z = IntegerProperty.create("offset_z", 0, 1);
 
+    // --- CONSTRUCTOR ---
     public VaultPartBlock(Properties props) {
         super(props);
         this.registerDefaultState(this.stateDefinition.any()
@@ -52,13 +55,23 @@ public class VaultPartBlock extends Block {
     }
 
     @Override
+    protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        BlockPos origin = getOrigin(pos, state);
+        BlockState masterState = level.getBlockState(origin);
+        if (masterState.getBlock() instanceof VaultBlock vault) {
+            return vault.useItemOn(stack, masterState, level, origin, player, hand, hitResult);
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level instanceof ServerLevel)) return InteractionResult.CONSUME;
 
         BlockPos origin = getOrigin(pos, state);
         BlockState masterState = level.getBlockState(origin);
         if (masterState.getBlock() instanceof VaultBlock vault) {
-            vault.openFor(level, origin, player);
+            vault.useWithoutItem(masterState, level, origin, player, hit);
         }
         return InteractionResult.SUCCESS;
     }

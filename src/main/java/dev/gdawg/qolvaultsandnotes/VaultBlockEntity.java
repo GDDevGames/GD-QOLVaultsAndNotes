@@ -6,8 +6,6 @@ package dev.gdawg.qolvaultsandnotes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
@@ -24,8 +22,9 @@ import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
+
+import java.util.UUID;
 
 public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlockEntity {
     private final ChestLidController chestLidController = new ChestLidController();
@@ -35,6 +34,38 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
         // Since it's a NonNullList, specify what to fill the empty slots with
         ItemStack.EMPTY);
 
+    private String assignedCode = "";
+    private boolean lockedWithKeycard = false;
+
+    public boolean isLockedWithKeycard() {
+        return lockedWithKeycard;
+    }
+    public void setLockedWithKeycard(boolean val) {
+        this.lockedWithKeycard = val;
+    }
+
+    public String getAssignedCode() {
+        return assignedCode;
+    }
+    public void setAssignedCode(String code) {
+        this.assignedCode = code;
+    }
+
+    private boolean locked = false;
+    private UUID lockOwner = null;
+
+    public boolean isLocked() {
+        return locked;
+    }
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+    }
+    public UUID getLockOwner() {
+        return lockOwner;
+    }
+    public void setLockOwner(UUID uuid) {
+        this.lockOwner = uuid;
+    }
 
     public VaultBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VAULT_ENTITY.get(), pos, state);
@@ -79,7 +110,6 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
         stack.limitSize(this.getMaxStackSize(stack));
         items.set(slot, stack);
         this.setChanged();
-        //syncToViewers();
     }
 
     @Override
@@ -97,7 +127,8 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
     public @Nullable AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
         if (this.canOpen(player)) {
             return this.createMenu(containerId, playerInventory);
-        } else {
+        }
+        else {
             sendChestLockedNotifications(this.getBlockPos().getCenter(), player, this.getDisplayName());
             return null;
         }
@@ -122,13 +153,26 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+
+        // Save the additional safe-specific data
         ContainerHelper.saveAllItems(output, this.items);
+        output.putString("assigned_code", assignedCode);
+        output.putBoolean("locked_with_keycard", lockedWithKeycard);
+        output.putBoolean("locked", locked);
+        if (lockOwner != null) output.putString("lock_owner", lockOwner.toString());
     }
 
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+
+        // Load the additional safe-specific data
         ContainerHelper.loadAllItems(input, this.items);
+        assignedCode = input.getStringOr("assigned_code", "");
+        lockedWithKeycard = input.getBooleanOr("locked_with_keycard", false);
+        locked = input.getBooleanOr("locked", false);
+        String uuidStr = input.getStringOr("lock_owner", "");
+        lockOwner = uuidStr.isEmpty() ? null : UUID.fromString(uuidStr);
     }
 
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
@@ -172,6 +216,7 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
         }
     };
 
+    // TODO: Implement animations
     public static void lidAnimateTick(Level level, BlockPos pos, BlockState state, VaultBlockEntity entity) {
         boolean isOpen = state.getValue(VaultBlock.ACTIVATED);
         entity.chestLidController.shouldBeOpen(isOpen);
@@ -214,22 +259,4 @@ public class VaultBlockEntity extends BaseContainerBlockEntity implements LidBlo
         }
         return super.triggerEvent(id, type);
     }
-
-    /*private void syncToViewers() {
-        if (this.level == null || this.level.isClientSide()) return;
-
-        NonNullList<ItemStack> allItems = NonNullList.withSize(SIZE, ItemStack.EMPTY);
-        for (int i = 0; i < SIZE; i++) {
-            allItems.set(i, items.get(i).copy());
-        }
-
-        for (ServerPlayer player : ((ServerLevel) this.level).players()) {
-            if (player.containerMenu instanceof VaultMenu vaultMenu
-                    && vaultMenu.blockEntity == this) {
-                PacketDistributor.sendToPlayer(player, new VaultFullSyncPacket(allItems));
-            }
-        }
-    }*/
-
-
 }

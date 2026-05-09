@@ -6,13 +6,12 @@ package dev.gdawg.qolvaultsandnotes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.startup.Server;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -46,11 +45,7 @@ public class QOLVaultsAndNotes {
                     BulletinBoardBlockEntity be =
                             (BulletinBoardBlockEntity) level.getBlockEntity(packet.pos());
                     if (be != null && player.containerMenu instanceof BulletinBoardMenu menu) {
-                        boolean success = menu.pinNote(packet.slot(), packet.title(),
-                                packet.body(), packet.colour(), packet.isNew());
-                        if (success) {
-                            be.setNote(packet.slot(), packet.title(), packet.body(), packet.colour());
-                        }
+                        menu.pinNote(packet.slot(), packet.title(), packet.body(), packet.colour(), packet.isNew());
                     }
                 });
             }
@@ -63,7 +58,6 @@ public class QOLVaultsAndNotes {
             (packet, context) -> {
                 ServerPlayer player = (ServerPlayer) context.player();
                 if (player.containerMenu instanceof VaultMenu vaultMenu) {
-                    System.out.println("Server received scroll: " + packet.rowOffset());
                     vaultMenu.scrollTo(packet.rowOffset());
                 }
             }
@@ -77,33 +71,25 @@ public class QOLVaultsAndNotes {
                 context.enqueueWork(() -> {
                     ServerPlayer player = (ServerPlayer) context.player();
                     Level level = player.level();
-                    SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(packet.pos());
-                    SafeBlock block = (SafeBlock) level.getBlockState(packet.pos()).getBlock();
-                    if (be != null && be.getAssignedCode().equals(packet.enteredCode())) {
-                        //player.openMenu((MenuProvider) be);
-                        block.openFor(player, be);
-                    } else {
-                        player.displayClientMessage(Component.literal("Incorrect code."), true);
+                    BlockEntity be = level.getBlockEntity(packet.pos());
+                    if(be instanceof SafeBlockEntity blockEntity) {
+                        SafeBlock block = (SafeBlock) level.getBlockState(packet.pos()).getBlock();
+                        if (blockEntity != null && blockEntity.getAssignedCode().equals(packet.enteredCode())) {
+                            block.openFor(player, blockEntity);
+                        } else {
+                            player.displayClientMessage(Component.literal("Incorrect code."), true);
+                        }
+                    } else if (be instanceof VaultBlockEntity blockEntity) {
+                        VaultBlock block = (VaultBlock) level.getBlockState(packet.pos()).getBlock();
+                        if (blockEntity != null && blockEntity.getAssignedCode().equals(packet.enteredCode())) {
+                            block.openFor(level, packet.pos(), player);
+                        } else {
+                            player.displayClientMessage(Component.literal("Incorrect code."), true);
+                        }
                     }
                 });
             }
         );
-
-        // Sync packet for the vault entity
-        /*registrar.playToClient(
-            VaultFullSyncPacket.TYPE,
-            VaultFullSyncPacket.STREAM_CODEC,
-            (packet, context) -> {
-                // Must run on the main client thread
-                context.enqueueWork(() -> {
-                    var mc = net.minecraft.client.Minecraft.getInstance();
-                    if (mc.player != null &&
-                        mc.player.containerMenu instanceof VaultMenu vaultMenu) {
-                            vaultMenu.applyFullSync(packet.allItems());
-                    }
-                });
-            }
-        );*/
 
         // Packet for creating the safe code screen
         registrar.playToClient(

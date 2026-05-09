@@ -1,8 +1,13 @@
+/// ----- SafeCodeScreen -----
+/// Code for the PIN code GUI.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
@@ -18,12 +23,22 @@ public class SafeCodeScreen extends Screen {
             QOLVaultsAndNotes.MODID, "textures/gui/container/serialcode_screen.png");
     private static final Identifier SEGMENT_ACTIVE = Identifier.fromNamespaceAndPath(
             QOLVaultsAndNotes.MODID, "textures/gui/sprites/serial_code_screen/xp_filled.png");
+    private static final Identifier KEY_ = Identifier.fromNamespaceAndPath(
+            QOLVaultsAndNotes.MODID, "textures/gui/sprites/serial_code_screen/key.png");
+    private static final Identifier ARROW_BUTTON = Identifier.fromNamespaceAndPath(
+            QOLVaultsAndNotes.MODID, "textures/gui/sprites/pin_code_screen/arrow.png");
+    private static final Identifier CLEAR_BUTTON = Identifier.fromNamespaceAndPath(
+            QOLVaultsAndNotes.MODID, "textures/gui/sprites/pin_code_screen/x.png");
+    private static final Identifier OK_BUTTON = Identifier.fromNamespaceAndPath(
+            QOLVaultsAndNotes.MODID, "textures/gui/sprites/pin_code_screen/confirm.png");
 
     private final BlockPos blockPos;
-    private final boolean isKeycard; // false = key = serial screen, true = keycard = pincode screen
+    private final boolean isKeycard;
+    // False = key = serial screen
+    // True = keycard = PIN screen
     private String enteredCode = "";
 
-    // Serial layout segment state — 18 toggleable segments
+    // Amount of segments in the serial code
     private final boolean[] segments = new boolean[18];
 
     private static int IMAGE_WIDTH  = 180;
@@ -31,17 +46,16 @@ public class SafeCodeScreen extends Screen {
     private int leftPos;
     private int topPos;
 
-    // Segment dimensions
     private static final int SEGMENT_WIDTH  = 11;
     private static final int SEGMENT_HEIGHT = 5;
     private static final int SEGMENT_GAP    = -1;
     private static final int SEGMENT_START_X = 37;
     private static final int SEGMENT_START_Y = 51;
 
-    // Title position
-    private static final int TITLE_START_X = 50;
-    private static final int TITLE_START_Y = 10;
+    private static int TITLE_START_X;
+    private static int TITLE_START_Y;
 
+    // --- CONSTRUCTOR ---
     public SafeCodeScreen(BlockPos blockPos, boolean isKeycard) {
         super(Component.translatable("container.qolvaultsandnotes.safe"));
         this.blockPos = blockPos;
@@ -50,6 +64,7 @@ public class SafeCodeScreen extends Screen {
 
     @Override
     protected void init() {
+        TITLE_START_X = width / 2;
         if (!isKeycard) {
             initSerialLayout();
         } else {
@@ -63,13 +78,35 @@ public class SafeCodeScreen extends Screen {
         this.leftPos = (this.width  - IMAGE_WIDTH)  / 2;
         this.topPos  = (this.height - IMAGE_HEIGHT) / 2;
 
-        // 18 segments are rendered and clicked manually — see render() and mouseClicked()
-        // Only a confirm button is added as a widget
-        addRenderableWidget(Button.builder(
-                Component.literal("OK"),
-                btn -> onConfirmPressed()
-        ).bounds(leftPos + IMAGE_WIDTH / 2 - 15, topPos + 160, 30, 20).build());
+        TITLE_START_Y = topPos + 20;
 
+        // 18 segments are rendered and clicked manually in render() and mouseClicked()
+        // Only the confirm button is added as a widget
+
+        addRenderableWidget(new AbstractButton(leftPos + IMAGE_WIDTH / 2 - 8, topPos + 63, 16, 16, Component.empty()) {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                onConfirmPressed();
+            }
+
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier id = isHoveredOrFocused()
+                        ? Identifier.withDefaultNamespace("container/beacon/button_highlighted")
+                        : Identifier.withDefaultNamespace("container/beacon/button");
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                renderIcon(guiGraphics);
+            }
+
+            protected void renderIcon(GuiGraphics g) {
+                g.blit(RenderPipelines.GUI_TEXTURED, KEY_, getX(), getY(), 0, 0, 16, 16, 16, 16);
+            }
+
+            @Override
+            public void updateWidgetNarration(NarrationElementOutput output) {
+                defaultButtonNarrationText(output);
+            }
+        });
     }
 
     private void initPincodeLayout() {
@@ -78,44 +115,187 @@ public class SafeCodeScreen extends Screen {
         this.leftPos = (this.width  - IMAGE_WIDTH)  / 2;
         this.topPos  = (this.height - IMAGE_HEIGHT) / 2;
 
+        TITLE_START_Y = topPos + 30;
+
+        // Buttons 1-9
         for (int i = 1; i <= 9; i++) {
             final int digit = i;
             int col = (i - 1) % 3;
             int row = (i - 1) / 3;
-            addRenderableWidget(Button.builder(
-                    Component.literal(String.valueOf(digit)),
-                    btn -> enteredCode += digit
-            ).bounds(leftPos + 20 + col * 24, topPos + 50 + row * 24, 20, 20).build());
+            addRenderableWidget(new AbstractButton(leftPos + 23 + col * 32, topPos + 64 + row * 32, 32, 32, Component.empty()) {
+                @Override
+                public void onPress(InputWithModifiers input) {
+                    enteredCode += digit;
+                }
+                // TODO: Replace with custom PIN button sprites (with numbers on them, not empty ones)
+                @Override
+                public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                    Identifier id = isHoveredOrFocused()
+                            ? Identifier.withDefaultNamespace("container/beacon/button_highlighted")
+                            : Identifier.withDefaultNamespace("container/beacon/button");
+                    guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                    guiGraphics.drawCenteredString(font, Component.literal(String.valueOf(digit)), getX() + 16, getY() + 12, -1);
+                }
+
+                @Override
+                public void updateWidgetNarration(NarrationElementOutput output) {
+                    defaultButtonNarrationText(output);
+                }
+            });
         }
 
-        addRenderableWidget(Button.builder(
-                Component.literal("0"),
-                btn -> enteredCode += "0"
-        ).bounds(leftPos + 44, topPos + 122, 20, 20).build());
+        // Button 0
+        addRenderableWidget(new AbstractButton(leftPos + 23 + 32, topPos + 64 + 3 * 32, 32, 32, Component.empty()) {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                enteredCode += 0;
+            }
 
-        addRenderableWidget(Button.builder(
-                Component.literal("<"),
-                btn -> {
-                    if (!enteredCode.isEmpty())
-                        enteredCode = enteredCode.substring(0, enteredCode.length() - 1);
+            // TODO: Replace with custom PIN button sprites (with numbers on them, not empty ones)
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier id = isHoveredOrFocused()
+                        ? Identifier.withDefaultNamespace("container/beacon/button_highlighted")
+                        : Identifier.withDefaultNamespace("container/beacon/button");
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                guiGraphics.drawCenteredString(font, Component.literal(String.valueOf(0)), getX() + 16, getY() + 12, -1);
+            }
+
+            @Override
+            public void updateWidgetNarration(NarrationElementOutput output) {
+                defaultButtonNarrationText(output);
+            }
+        });
+
+        // Arrow button
+        addRenderableWidget(new AbstractButton(leftPos + 23 + 3 * 32 + 4, topPos + 64 + 32, 32, 32, Component.empty()) {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                if (!enteredCode.isEmpty())
+                    enteredCode = enteredCode.substring(0, enteredCode.length() - 1);
+            }
+
+            // TODO: Replace with custom PIN button sprites (with the symbols on them)
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier id = isHoveredOrFocused()
+                        ? Identifier.withDefaultNamespace("container/beacon/button_highlighted")
+                        : Identifier.withDefaultNamespace("container/beacon/button");
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                renderIcon(guiGraphics);
+            }
+
+            protected void renderIcon(GuiGraphics g) {
+                g.blit(RenderPipelines.GUI_TEXTURED, ARROW_BUTTON, getX(), getY(), 0, 0, 32, 32, 32, 32);
+            }
+
+            @Override
+            public void updateWidgetNarration(NarrationElementOutput output) {
+                defaultButtonNarrationText(output);
+            }
+        });
+
+        // Clear button
+        addRenderableWidget(new AbstractButton(leftPos + 23 + 3 * 32 + 4, topPos + 64, 32, 32, Component.empty()) {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                enteredCode = "";
+            }
+
+            // TODO: Replace with custom PIN button sprites (with the symbols on them)
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier id = isHoveredOrFocused()
+                        ? Identifier.withDefaultNamespace("container/beacon/button_highlighted")
+                        : Identifier.withDefaultNamespace("container/beacon/button");
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                renderIcon(guiGraphics);
+            }
+
+            protected void renderIcon(GuiGraphics g) {
+                g.blit(RenderPipelines.GUI_TEXTURED, CLEAR_BUTTON, getX(), getY(), 0, 0, 32, 32, 32, 32);
+            }
+
+            @Override
+            public void updateWidgetNarration(NarrationElementOutput output) {
+                defaultButtonNarrationText(output);
+            }
+        });
+        // Confirm button
+        addRenderableWidget(new AbstractButton(leftPos + 23 + 3 * 32 + 4, topPos + 64 + 2 * 32, 32, 32, Component.empty()) {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                onConfirmPressed();
+            }
+
+            // TODO: Replace with custom PIN button sprites (with the symbols on them)
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier id = isHoveredOrFocused()
+                        ? Identifier.withDefaultNamespace("container/beacon/button_highlighted")
+                        : Identifier.withDefaultNamespace("container/beacon/button");
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                renderIcon(guiGraphics);
+            }
+
+            protected void renderIcon(GuiGraphics g) {
+                g.blit(RenderPipelines.GUI_TEXTURED, OK_BUTTON, getX(), getY(), 0, 0, 32 ,32, 32, 32);
+            }
+
+            @Override
+            public void updateWidgetNarration(NarrationElementOutput output) {
+                defaultButtonNarrationText(output);
+            }
+        });
+
+        // Empty keypad buttons
+        for (int j = 0; j < 2; j++)
+        {
+            addRenderableWidget(new AbstractButton(leftPos + 23 + j * 64, topPos + 64 + 3 * 32, 32, 32, Component.empty()) {
+                @Override
+                public void onPress(InputWithModifiers input) {
+                    return;
                 }
-        ).bounds(leftPos + 20, topPos + 122, 20, 20).build());
 
-        addRenderableWidget(Button.builder(
-                Component.literal("x"),
-                btn -> enteredCode = ""
-        ).bounds(leftPos + 20, topPos + 140, 20, 20).build());
+                // TODO: Replace with custom PIN button sprites (the empty ones)
+                @Override
+                public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                    Identifier id = Identifier.withDefaultNamespace("container/beacon/button");
+                    guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+                }
 
-        addRenderableWidget(Button.builder(
-                Component.literal("OK"),
-                btn -> onConfirmPressed()
-        ).bounds(leftPos + 68, topPos + 122, 30, 20).build());
+                @Override
+                public void updateWidgetNarration(NarrationElementOutput output) {
+                    return;
+                }
+            });
+        }
+
+        // Empty menu button
+        addRenderableWidget(new AbstractButton(leftPos + 23 + 3 * 32 + 4, topPos + 64 + 3 * 32, 32, 32, Component.empty()) {
+            @Override
+            public void onPress(InputWithModifiers input) {
+                return;
+            }
+
+            // TODO: Replace with custom PIN button sprites (the empty ones)
+            @Override
+            public void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+                Identifier id = Identifier.withDefaultNamespace("container/beacon/button");
+                guiGraphics.blitSprite(RenderPipelines.GUI_TEXTURED, id, getX(), getY(), width, height);
+            }
+
+            @Override
+            public void updateWidgetNarration(NarrationElementOutput output) {
+                return;
+            }
+        });
     }
 
     private void onConfirmPressed() {
         String code;
         if (!isKeycard) {
-            // Build dot/dash string from segment states
+            // Build string from segment states
             StringBuilder sb = new StringBuilder();
             for (boolean segment : segments) {
                 sb.append(segment ? '.' : '-');
@@ -133,6 +313,7 @@ public class SafeCodeScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean isDoubleClick) {
         double mouseX = mouseButtonEvent.x();
         double mouseY = mouseButtonEvent.y();
+        // If we're on the serial code screen, handle clicking the segments
         if (!isKeycard) {
             for (int i = 0; i < 18; i++) {
                 int segX = leftPos + SEGMENT_START_X + i * (SEGMENT_WIDTH + SEGMENT_GAP);
@@ -140,7 +321,7 @@ public class SafeCodeScreen extends Screen {
                 if(i > 8) segX++;
                 if (mouseX >= segX && mouseX < segX + SEGMENT_WIDTH
                         && mouseY >= segY && mouseY < segY + SEGMENT_HEIGHT) {
-                    segments[i] = !segments[i]; // toggle
+                    segments[i] = !segments[i];
                     return true;
                 }
             }
@@ -151,8 +332,6 @@ public class SafeCodeScreen extends Screen {
     @Override
     public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-        // isKeycard false = key = serial screen, isKeycard true = keycard = pincode screen
-        if(isKeycard) topPos = (this.width - 128) / 2;
 
         guiGraphics.blit(
                 RenderPipelines.GUI_TEXTURED,
@@ -189,18 +368,11 @@ public class SafeCodeScreen extends Screen {
                 }
                 // Unfilled segments show through from the background PNG
             }
-        } else {
-            // Draw entered digits for pincode screen
-            guiGraphics.drawString(this.font,
-                    Component.literal(enteredCode),
-                    leftPos + 20, topPos + 30,
-                    0x404020, false);
         }
 
         // Render the title of the safe code screen
-        guiGraphics.drawString(this.font, this.title, TITLE_START_X, TITLE_START_Y, -12566464, false);
+        guiGraphics.drawString(this.font, this.title, TITLE_START_X - font.width(title) / 2, TITLE_START_Y, -12566464, false);
     }
-
 
     @Override
     public boolean isPauseScreen() {

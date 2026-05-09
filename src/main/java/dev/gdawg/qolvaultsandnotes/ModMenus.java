@@ -12,6 +12,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.function.Supplier;
 
 public class ModMenus {
+    // GUI register
     // Daniel: should maybe call it ModMenuTypes honestly bc that's what it's doing
     public static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(
         // Daniel: what registry we're registering in. BuiltInRegistries is mojang's existing ones
@@ -19,15 +20,17 @@ public class ModMenus {
         QOLVaultsAndNotes.MODID
     );
 
+    // Register vault GUI
     public static final Supplier<MenuType<VaultMenu>> VAULT_MENU = MENUS.register(
         "vault_menu",
         () -> IMenuTypeExtension.create(VaultMenu::new)
     );
+
+    // Register bulletin board GUI
     public static final Supplier<MenuType<BulletinBoardMenu>> BULLETINBOARD_MENU = MENUS.register(
         "bulletinboard_menu",
         () -> IMenuTypeExtension.create(BulletinBoardMenu::new)
     );
-
 
     // Send the menus to the event bus
     public static void register(IEventBus eventBus) {

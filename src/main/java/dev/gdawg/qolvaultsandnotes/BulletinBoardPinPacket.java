@@ -1,3 +1,6 @@
+/// ----- BulletinBoardPinPacket -----
+/// Packet that syncs pinning notes to the board from client to server.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
@@ -26,5 +29,7 @@ public record BulletinBoardPinPacket(
             );
 
     @Override
-    public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
 }

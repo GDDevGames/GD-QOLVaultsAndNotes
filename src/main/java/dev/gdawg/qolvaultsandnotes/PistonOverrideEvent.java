@@ -1,3 +1,6 @@
+/// ----- PistonOverrideEvent -----
+/// Event for toggling a piston with a keycard.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;

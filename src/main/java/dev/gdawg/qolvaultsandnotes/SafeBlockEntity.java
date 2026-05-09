@@ -1,3 +1,6 @@
+/// ----- SafeBlockEntity -----
+/// Handles the safe entity & its functions (opening/closing, locking/unlocking)
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.core.BlockPos;
@@ -29,19 +32,35 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     private final ChestLidController chestLidController = new ChestLidController();
     private boolean lockedWithKeycard = false;
 
-    public boolean isLockedWithKeycard() { return lockedWithKeycard; }
-    public void setLockedWithKeycard(boolean val) { this.lockedWithKeycard = val; }
+    public boolean isLockedWithKeycard() {
+        return lockedWithKeycard;
+    }
+    public void setLockedWithKeycard(boolean val) {
+        this.lockedWithKeycard = val;
+    }
 
-    public String getAssignedCode() { return assignedCode; }
-    public void setAssignedCode(String code) { this.assignedCode = code; }
+    public String getAssignedCode() {
+        return assignedCode;
+    }
+    public void setAssignedCode(String code) {
+        this.assignedCode = code;
+    }
 
     private boolean locked = false;
     private UUID lockOwner = null;
 
-    public boolean isLocked() { return locked; }
-    public void setLocked(boolean locked) { this.locked = locked; }
-    public UUID getLockOwner() { return lockOwner; }
-    public void setLockOwner(UUID uuid) { this.lockOwner = uuid; }
+    public boolean isLocked() {
+        return locked;
+    }
+    public void setLocked(boolean locked) {
+        this.locked = locked;
+    }
+    public UUID getLockOwner() {
+        return lockOwner;
+    }
+    public void setLockOwner(UUID uuid) {
+        this.lockOwner = uuid;
+    }
 
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
         @Override
@@ -81,6 +100,7 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
         super(ModBlockEntities.SAFE_ENTITY.get(), pos, state);
     }
 
+    // TODO: Implement animations
     public static void lidAnimateTick(Level level, BlockPos pos, BlockState state, SafeBlockEntity entity) {
         boolean isOpen = state.getValue(SafeBlock.ACTIVATED);
         entity.chestLidController.shouldBeOpen(isOpen);
@@ -128,6 +148,8 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+
+        // Save the additional safe-specific data
         ContainerHelper.saveAllItems(output, this.items);
         output.putString("assigned_code", assignedCode);
         output.putBoolean("locked_with_keycard", lockedWithKeycard);
@@ -138,6 +160,8 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+
+        // Load the additional safe-specific data
         ContainerHelper.loadAllItems(input, this.items);
         assignedCode = input.getStringOr("assigned_code", "");
         lockedWithKeycard = input.getBooleanOr("locked_with_keycard", false);
@@ -158,13 +182,19 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     }
 
     @Override
-    public int getContainerSize() { return 18; }
+    public int getContainerSize() {
+        return 18;
+    }
 
     @Override
-    public boolean isEmpty() { return items.stream().allMatch(ItemStack::isEmpty); }
+    public boolean isEmpty() {
+        return items.stream().allMatch(ItemStack::isEmpty);
+    }
 
     @Override
-    public ItemStack getItem(int slot) { return items.get(slot); }
+    public ItemStack getItem(int slot) {
+        return items.get(slot);
+    }
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
@@ -187,8 +217,12 @@ public class SafeBlockEntity extends BlockEntity implements Container, LidBlockE
     }
 
     @Override
-    public boolean stillValid(Player player) { return true; }
+    public boolean stillValid(Player player) {
+        return true;
+    }
 
     @Override
-    public void clearContent() { items.clear(); }
+    public void clearContent() {
+        items.clear();
+    }
 }

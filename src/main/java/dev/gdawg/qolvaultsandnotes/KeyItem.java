@@ -1,3 +1,6 @@
+/// ----- KeyItem -----
+/// Base class for the key.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.world.InteractionResult;
@@ -6,6 +9,7 @@ import net.minecraft.world.item.context.UseOnContext;
 
 public class KeyItem extends Item {
 
+    // --- CONSTRUCTOR ---
     public KeyItem(Properties properties) {
         super(properties);
     }
@@ -24,7 +28,8 @@ public class KeyItem extends Item {
                         context.getClickLocation(),
                         context.getClickedFace(),
                         context.getClickedPos(),
-                        false)
+                        false
+                )
         );
     }
 }

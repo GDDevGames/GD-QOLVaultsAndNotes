@@ -1,3 +1,6 @@
+/// ----- KeycardItem -----
+/// Base class for the keycard.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import net.minecraft.world.InteractionResult;
@@ -6,6 +9,7 @@ import net.minecraft.world.item.context.UseOnContext;
 
 public class KeycardItem extends Item {
 
+    // --- CONSTRUCTOR ---
     public KeycardItem(Properties properties) {
         super(properties);
     }
@@ -22,7 +26,8 @@ public class KeycardItem extends Item {
                         context.getClickLocation(),
                         context.getClickedFace(),
                         context.getClickedPos(),
-                        false)
+                        false
+                )
         );
     }
 }

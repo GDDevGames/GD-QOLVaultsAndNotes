@@ -12,17 +12,21 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.Set;
 
 public class ModBlockEntities {
+    // Entity register
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
         DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, QOLVaultsAndNotes.MODID);
 
+    // Register bulletin board
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BulletinBoardBlockEntity>> BULLETIN_BOARD_ENTITY =
         BLOCK_ENTITIES.register("bulletin_board", () ->
             new BlockEntityType<>(BulletinBoardBlockEntity::new, Set.of(ModBlocks.BULLETIN_BOARD_BLOCK.get())));
 
+    // Register safe
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SafeBlockEntity>> SAFE_ENTITY =
         BLOCK_ENTITIES.register("safe", () ->
             new BlockEntityType<>(SafeBlockEntity::new, Set.of(ModBlocks.SAFE_BLOCK.get())));
 
+    // Register vault
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<VaultBlockEntity>> VAULT_ENTITY =
         BLOCK_ENTITIES.register("vault", () ->
             new BlockEntityType<>(VaultBlockEntity::new, Set.of(ModBlocks.VAULT_BLOCK.get())));

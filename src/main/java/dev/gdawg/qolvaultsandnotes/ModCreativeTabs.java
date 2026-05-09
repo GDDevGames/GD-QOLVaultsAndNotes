@@ -13,8 +13,10 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import static dev.gdawg.qolvaultsandnotes.ModItems.*;
 
 public class ModCreativeTabs {
+    // Tab register
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, QOLVaultsAndNotes.MODID);
 
+    // Register new tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QOLVAULTSANDNOTES = CREATIVE_MODE_TABS.register("qolvaultsandnotes", () -> CreativeModeTab.builder()
         .title(Component.translatable("itemGroup.qolvaultsandnotes"))
         .withTabsBefore(CreativeModeTabs.COMBAT)

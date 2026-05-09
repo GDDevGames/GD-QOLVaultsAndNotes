@@ -10,7 +10,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 
 public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
@@ -31,6 +30,7 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
     private float scrollOffset = 0.0f;
     private boolean isScrolling = false;
 
+    // --- CONSTRUCTOR ---
     public VaultScreen(VaultMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 194;
@@ -128,7 +128,6 @@ public class VaultScreen extends AbstractContainerScreen<VaultMenu> {
         int rowOffset = Math.round(scrollOffset * 2);
         this.menu.scrollTo(rowOffset);
         ClientPacketDistributor.sendToServer(new VaultScrollPacket(rowOffset));
-        System.out.println("Client sending scroll: " + rowOffset);
     }
 
     private boolean isInsideScrollbar(double mouseX, double mouseY) {

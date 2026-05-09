@@ -1,3 +1,6 @@
+/// ----- SafeBlock -----
+/// Handles the non-entity safe block.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
 import com.mojang.serialization.MapCodec;
@@ -44,11 +47,13 @@ public class SafeBlock extends BaseEntityBlock {
         return CODEC;
     }
 
+    // --- CONSTRUCTOR ---
     public SafeBlock(Properties props) {
         super(props);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(ACTIVATED, false));
+                .setValue(ACTIVATED, false)
+        );
     }
 
     @Override
@@ -68,6 +73,7 @@ public class SafeBlock extends BaseEntityBlock {
                 .setValue(ACTIVATED, false);
     }
 
+    // Check specific items being used on the safe
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state,
                                           Level level, BlockPos pos, Player player,
@@ -75,16 +81,20 @@ public class SafeBlock extends BaseEntityBlock {
 
         ItemStack heldItem = player.getItemInHand(hand);
 
+        // -- KEY --
         if (heldItem.is(ModItems.KEY_ITEM.get())) {
-            if (!heldItem.has(DataComponents.CUSTOM_NAME)) return InteractionResult.PASS;  // ← checks name exists
-            StringBuilder code = new StringBuilder(heldItem.get(DataComponents.CUSTOM_NAME).getString());             // ← reads the name
+            // Check that the item has a custom name, if it does then use it
+            if (!heldItem.has(DataComponents.CUSTOM_NAME)) return InteractionResult.PASS;
+            StringBuilder code = new StringBuilder(heldItem.get(DataComponents.CUSTOM_NAME).getString());
 
+            // Validate that the name is an actual code
             if (!code.toString().matches("[.\\-]+") || code.length() > 18) {
                 player.displayClientMessage(
                         Component.literal("Serial code must only contain . and -, max 18 characters."), true);
                 return InteractionResult.PASS;
             }
 
+            // If the name is shorter than 18 characters, the remaining code is blank
             if(code.length() < 18) {
                 int blankAmount = 18 - code.length();
                 for(int i =  0; i < blankAmount; i++) {
@@ -92,17 +102,21 @@ public class SafeBlock extends BaseEntityBlock {
                 }
             }
 
+            // Now handle assigning the code
             if (!level.isClientSide()) {
                 SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
                 if (be != null) {
+                    // In order to lock the safe with a code, a lock must be used on it first
                     if (!be.isLocked()) {
                         player.displayClientMessage(Component.literal("Use a lock first."), true);
                         return InteractionResult.PASS;
                     }
+                    // Is there already a code assigned to the lock?
                     if (!be.getAssignedCode().isEmpty()) {
                         player.displayClientMessage(Component.literal("A code is already assigned."), true);
                         return InteractionResult.PASS;
                     }
+                    // If not, assign our new code
                     be.setAssignedCode(code.toString());
                     be.setLockedWithKeycard(false);
                     be.setChanged();
@@ -116,24 +130,30 @@ public class SafeBlock extends BaseEntityBlock {
             );
             return InteractionResult.SUCCESS;
 
-        } else if (heldItem.is(ModItems.KEYCARD_ITEM.get())) {
+        }
+        // --- KEYCARD ---
+        else if (heldItem.is(ModItems.KEYCARD_ITEM.get())) {
+            // Check that the item has a custom name, if it does then use it
             if (!heldItem.has(DataComponents.CUSTOM_NAME)) return InteractionResult.PASS;
-
             String code = heldItem.get(DataComponents.CUSTOM_NAME).getString();
 
+            // Is there no code in the name?
             if (code.isBlank()) return InteractionResult.PASS;
 
             if (!level.isClientSide()) {
                 SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
                 if (be != null) {
+                    // In order to lock the safe with a code, a lock must be used on it first
                     if (!be.isLocked()) {
                         player.displayClientMessage(Component.literal("Use a lock first."), true);
                         return InteractionResult.PASS;
                     }
+                    // Is there already a code assigned to the lock?
                     if (!be.getAssignedCode().isEmpty()) {
                         player.displayClientMessage(Component.literal("A code is already assigned."), true);
                         return InteractionResult.PASS;
                     }
+                    // If not, assign our new code
                     be.setAssignedCode(code);
                     be.setLockedWithKeycard(true);
                     be.setChanged();
@@ -146,11 +166,13 @@ public class SafeBlock extends BaseEntityBlock {
                     SoundSource.BLOCKS, 1.0f, 1.0f
             );
             return InteractionResult.SUCCESS;
-
-        } else if (heldItem.is(ModItems.LOCK_ITEM.get())) {
+        }
+        // --- LOCK ---
+        else if (heldItem.is(ModItems.LOCK_ITEM.get())) {
             if (!level.isClientSide()) {
                 SafeBlockEntity be = (SafeBlockEntity) level.getBlockEntity(pos);
                 if (be != null) {
+                    // Is there already a lock?
                     if (be.isLocked()) {
                         player.displayClientMessage(Component.literal("Already locked."), true);
                         return InteractionResult.PASS;
@@ -169,7 +191,6 @@ public class SafeBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
 
-        // Anything else — fall through to useWithoutItem
         return useWithoutItem(state, level, pos, player, hit);
     }
 
@@ -185,28 +206,34 @@ public class SafeBlock extends BaseEntityBlock {
         boolean hasCode = !be.getAssignedCode().isEmpty();
         boolean locked = be.isLocked();
 
-        //if it's not unlocked, open. otherwise the code underneath this will run.
+        // If it's not locked, open
         if(!locked) {
             openFor(player, be);
             return InteractionResult.SUCCESS;
         }
 
         if (!player.getUUID().equals(be.getLockOwner())) {
-            if(!hasCode){
+            // If the safe has no code, only the player who locked it can open it
+            if (!hasCode){
                 player.displayClientMessage(Component.literal("This safe is locked."), true);
                 return InteractionResult.SUCCESS;
-            } else {
+            }
+            // If it does have a code, open the safe GUI
+            else {
                 openSafeScreen(be, pos, player);
             }
-        } else {
-            //IF we want even the player who locked the safe to have to see the code screen, then this should run. Otherwise we should remove what's underneath.
-            if(hasCode) openSafeScreen(be, pos, player);
+        }
+        // If the player who owns the lock on the safe is opening it, still ask for a code if it has one
+        else {
+            if (hasCode) {
+                openSafeScreen(be, pos, player);
+            }
             return InteractionResult.SUCCESS;
         }
 
+        // If not, then just open it
         openFor(player, be);
         return InteractionResult.SUCCESS;
-
     }
 
 
