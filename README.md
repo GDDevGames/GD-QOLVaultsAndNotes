@@ -1,25 +1,28 @@
+Checklista inför Deadline
+[ ] Är koden kommenterad och strukturerad?
+[ ] Fungerar main-branchen utan krascher?
+[ ] Finns länkar till Trello, Figma och testprotokoll i README?
+[ ] Har Jonas (tbprogrammering) åtkomst till koden?
+[ ] Är användarmanualen/README.md lätt att förstå?
+[ ] Redo att presentera något intressant och trevligt under vecka 20?
 
-Installation information
-=======
-
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
-
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
-
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
-
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
-
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+# Projektnamn
+GD-QOLVaultsAndNotes
+##Deltagare
+Vilka har varit med, och kort vad varje individ ansvarat för
+## Beskrivning
+Här skriver du en mer djupgående text om ditt projekt. Förklara vad det gör, varför det skapades
+och ge en övergripande bild av hur det fungerar.
+## Kom igång
+### Förutsättningar
+* Beskriv eventuella krav, bibliotek, operativsystem eller liknande som behövs innan
+programmet installeras.
+* Ex. Windows 10, Python 3.9+
+### Installation (om möjligt)
+* Hur och var man laddar ner programmet.
+* Eventuella modifieringar som behöver göras i filer eller mappar (t.ex. miljövariabler).
+### Köra programmet
+* Hur man kör programmet.
+* Steg-för-steg-instruktioner i punktform.
+## Externt material
+Länkar i punktform med beskrivning till andra dokument (Google-drive, Trello, mm)
