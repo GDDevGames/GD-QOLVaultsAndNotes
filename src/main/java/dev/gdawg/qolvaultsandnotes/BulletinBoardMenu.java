@@ -3,7 +3,6 @@
 /// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
-import net.minecraft.core.NonNullList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;

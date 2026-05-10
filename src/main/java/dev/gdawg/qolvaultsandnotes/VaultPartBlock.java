@@ -61,18 +61,18 @@ public class VaultPartBlock extends Block {
         if (masterState.getBlock() instanceof VaultBlock vault) {
             return vault.useItemOn(stack, masterState, level, origin, player, hand, hitResult);
         }
-        return InteractionResult.SUCCESS;
+        return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!(level instanceof ServerLevel)) return InteractionResult.CONSUME;
+        if (!(level instanceof ServerLevel)) return InteractionResult.PASS;
 
         BlockPos origin = getOrigin(pos, state);
         BlockState masterState = level.getBlockState(origin);
         if (masterState.getBlock() instanceof VaultBlock vault) {
-            vault.useWithoutItem(masterState, level, origin, player, hit);
+            return vault.useWithoutItem(masterState, level, origin, player, hit);
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.FAIL;
     }
 }

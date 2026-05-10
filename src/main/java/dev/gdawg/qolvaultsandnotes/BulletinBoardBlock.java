@@ -63,14 +63,14 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        BlockEntity be = level.getBlockEntity(pos);
-
+        BulletinBoardBlockEntity be = (BulletinBoardBlockEntity)level.getBlockEntity(pos);
         if (be instanceof BulletinBoardBlockEntity blockEntity) {
             player.openMenu(new SimpleMenuProvider(
-                (id, inventory, p) -> new BulletinBoardMenu(id, inventory, blockEntity),
-                Component.literal("")
+                    (id, inventory, p) -> new BulletinBoardMenu(id, inventory, blockEntity),
+                    Component.literal("")
             ), pos);
         }
+
         return InteractionResult.SUCCESS;
     }
 
@@ -102,7 +102,7 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
             else if (fillableAmount == 0)
             {
                 player.displayClientMessage(Component.literal("There is no space for ink sacs in this bulletin board."), true);
-                return InteractionResult.PASS;
+                return InteractionResult.FAIL;
             }
 
             // If the amount that can be filled is less than the amount that you have
@@ -144,7 +144,7 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
             else if (fillableAmount == 0)
             {
                 player.displayClientMessage(Component.literal("There is no space for paper in this bulletin board."), true);
-                return InteractionResult.PASS;
+                return InteractionResult.FAIL;
             }
 
             // If the amount that can be filled is less than the amount that you have
@@ -160,17 +160,8 @@ public class BulletinBoardBlock extends Block implements EntityBlock {
             }
         }
 
-        if (!(level instanceof ServerLevel)) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (be instanceof BulletinBoardBlockEntity blockEntity) {
-            player.openMenu(new SimpleMenuProvider(
-                    (id, inventory, p) -> new BulletinBoardMenu(id, inventory, blockEntity),
-                    Component.literal("")
-            ), pos);
-        }
-        return InteractionResult.PASS;
+        // Return the super class (it returns InteractionResult.TRY_WITH_EMPTY_HAND leading us to useWithoutItem()
+        return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     @Override
