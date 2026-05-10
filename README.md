@@ -2,9 +2,9 @@
 GDS-QOLVaultsAndNotes
 
 ## Deltagare
-* Theodor Hedhman Nilsson - Projekt ledare och managerare, ansvarig för Figma prototyp samt vissa gränssnitt.
+* Theodor Hedhman Nilsson - Projekt ledare och managerare, ansvarig för kodning och Figma prototypen samt vissa gränssnitt.
 * Daniel Laxén - Stort sätt ansvarig för kodning och problemlösning tillsammans med att hjälpa fördjupa gruppens förståelse om Minecraft moddning.
-* Alvin Hansson - 3D modellering och texturer, ansvarig för kodgranskning samt delvis bidra med förståelse för Minecraft moddning tillsammans med Daniel.
+* Alvin Hansson - 3D modellering och texturer, ansvarig för kodgranskning, kommentarer och ljuddesign samt delvis bidra med förståelse för Minecraft moddning tillsammans med Daniel.
 
 ## Beskrivning
 GDS-QOLVaultsAndNotes är ett modd som skapades för att tillåta Quality of Life förändringar i Minecraft. Genom att använda sig av moddingsramverket NeoForge har vi skapat en modd som kan köras på en NeoForge Minecraft-klient.
