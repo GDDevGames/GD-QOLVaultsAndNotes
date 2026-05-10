@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "0": "minecraft:block/air",
+    "particle": "qolvaultsandnotes:block/safe"
+  }
+}

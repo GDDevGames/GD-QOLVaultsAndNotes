@@ -1,77 +1,117 @@
+/// ----- QOLVaultsAndNotes -----
+/// Initializes the mod serverside. Registers new event buses and several packets.
+/// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
-import org.slf4j.Logger;
-
-import com.mojang.logging.LogUtils;
-
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.registries.DeferredBlock;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredItem;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
-@Mod(QOLVaultsAndNotes.MOD_ID)
-public class QOLVaultsAndNotes
-{
-    // Define mod id in a common place for everything to reference
-    public static final String MOD_ID = "qolvaultsandnotes";
-    // Directly reference a slf4j logger
-    public static final Logger LOGGER = LogUtils.getLogger();
+@Mod(QOLVaultsAndNotes.MODID)
+public class QOLVaultsAndNotes {
+    public static final String MODID = "qolvaultsandnotes";
 
-    // The constructor for the mod class is the first code that is run when your mod is loaded.
-    // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
-    public QOLVaultsAndNotes(IEventBus modEventBus, ModContainer modContainer)
-    {
-        // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
-
-        // Register ourselves for server and other game events we are interested in.
-        // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.
-        // Do not add this line if there are no @SubscribeEvent-annotated functions in this class, like onServerStarting() below.
-        NeoForge.EVENT_BUS.register(this);
-
-        // Register the item to a creative tab
+    public QOLVaultsAndNotes(IEventBus modEventBus, ModContainer modContainer) {
+        ModBlocks.register(modEventBus);
+        ModItems.register(modEventBus);
+        ModCreativeTabs.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
+        ModMenus.register(modEventBus);
         modEventBus.addListener(this::addCreative);
-
-        // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modEventBus.addListener(this::registerPackets);
     }
 
-    private void commonSetup(FMLCommonSetupEvent event)
-    {
+    // Packets accompanying various block entities (primarily GUIs)
+    private void registerPackets(RegisterPayloadHandlersEvent event) {
+        var registrar = event.registrar("1");
+
+        registrar.playToClient(
+                OpenSafeScreenPacket.TYPE,
+                OpenSafeScreenPacket.STREAM_CODEC,
+                (packet, context) -> {
+                    context.enqueueWork(() -> {
+                        ClientSetup.openSafeScreen(packet.pos(), packet.isKeycard());
+                        /*Minecraft.getInstance().setScreen(
+                                new SafeCodeScreen(packet.pos(), packet.isKeycard())
+                        );*/
+                    });
+                }
+        );
+
+
+        registrar.playToServer(
+            BulletinBoardPinPacket.TYPE,
+            BulletinBoardPinPacket.STREAM_CODEC,
+            (packet, context) -> {
+                context.enqueueWork(() -> {
+                    ServerPlayer player = (ServerPlayer) context.player();
+                    Level level = player.level();
+                    BulletinBoardBlockEntity be =
+                            (BulletinBoardBlockEntity) level.getBlockEntity(packet.pos());
+                    if (be != null && player.containerMenu instanceof BulletinBoardMenu menu) {
+                        menu.pinNote(packet.slot(), packet.title(), packet.body(), packet.colour(), packet.isNew());
+                    }
+                });
+            }
+        );
+
+        // Scrolling packet for the vault
+        registrar.playToServer(
+            VaultScrollPacket.TYPE,
+            VaultScrollPacket.STREAM_CODEC,
+            (packet, context) -> {
+                ServerPlayer player = (ServerPlayer) context.player();
+                if (player.containerMenu instanceof VaultMenu vaultMenu) {
+                    vaultMenu.scrollTo(packet.rowOffset());
+                }
+            }
+        );
+
+        // Safe PIN code packet
+        registrar.playToServer(
+            SafeCodePacket.TYPE,
+            SafeCodePacket.STREAM_CODEC,
+            (packet, context) -> {
+                context.enqueueWork(() -> {
+                    ServerPlayer player = (ServerPlayer) context.player();
+                    Level level = player.level();
+                    BlockEntity be = level.getBlockEntity(packet.pos());
+                    if(be instanceof SafeBlockEntity blockEntity) {
+                        SafeBlock block = (SafeBlock) level.getBlockState(packet.pos()).getBlock();
+                        if (blockEntity != null && blockEntity.getAssignedCode().equals(packet.enteredCode())) {
+                            block.openFor(player, blockEntity);
+                        } else {
+                            player.displayClientMessage(Component.literal("Incorrect code."), true);
+                        }
+                    } else if (be instanceof VaultBlockEntity blockEntity) {
+                        VaultBlock block = (VaultBlock) level.getBlockState(packet.pos()).getBlock();
+                        if (blockEntity != null && blockEntity.getAssignedCode().equals(packet.enteredCode())) {
+                            block.openFor(level, packet.pos(), player);
+                        } else {
+                            player.displayClientMessage(Component.literal("Incorrect code."), true);
+                        }
+                    }
+                });
+            }
+        );
 
     }
 
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event)
-    {
-
-    }
-
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
-
+    private void addCreative(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+            event.accept(ModItems.BULLETIN_BOARD_ITEM.get());
+            event.accept(ModItems.SAFE_ITEM.get());
+            event.accept(ModItems.LOCK_ITEM.get());
+            event.accept(ModItems.KEY_ITEM.get());
+            event.accept(ModItems.KEYCARD_ITEM.get());
+        }
     }
 }

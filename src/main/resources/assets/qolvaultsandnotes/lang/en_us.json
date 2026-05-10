@@ -1,0 +1,12 @@
+{
+  "itemGroup.qolvaultsandnotes": "Vaults And Notes",
+  "block.qolvaultsandnotes.bulletin_board": "Bulletin Board",
+  "item.qolvaultsandnotes.bulletin_board": "Bulletin Board",
+  "block.qolvaultsandnotes.safe": "Safe",
+  "item.qolvaultsandnotes.safe": "Safe",
+  "item.qolvaultsandnotes.lock": "Lock",
+  "item.qolvaultsandnotes.key": "Key",
+  "item.qolvaultsandnotes.keycard": "Keycard",
+  "container.qolvaultsandnotes.vault": "Vault",
+  "container.qolvaultsandnotes.safe": "Safe"
+}
