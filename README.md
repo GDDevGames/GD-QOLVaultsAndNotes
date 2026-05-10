@@ -68,6 +68,7 @@ Nyckeln kan utöver sin säkerhetsfunktion även användas för att **öppna och
 * Java 21
 * Minecraft 1.21.11
 * Neoforge 21.11+
+* Windows 10/11 Dator (går att köra på skollaptop)
 
 ### Installation (om möjligt)
 Vi rekommenderar att du installerar moddet via Curseforge appen.
