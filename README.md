@@ -73,8 +73,12 @@ Nyckeln kan utöver sin säkerhetsfunktion även användas för att **öppna och
 ### Installation (om möjligt)
 Vi rekommenderar att du installerar moddet via Curseforge appen.
 1. Ladda ner Curseforge appen.
-2. Skapa ett modpack med Neoforge version 1.21.11.
+2. Klicka "fortsätt som gäst"/"continue as guest", curseforge konto behövs inte.
 3. Sök efter vårt modd och installera det.
+4. Efter du klickar installera kommer den att fråga om att skapa ett modpack, du klickar skapa och väljer neoforge och minecraft version 1.21.11 (om den vill att du ska välja det).
+5. Tillslut klickar du spela och sen hanteras allt av curseforge appen.
+
+! Om curseforge appen frågar om minecraft login vid något steg, så är det bara att logga in med det minecraft konto du använder.
 
 *Om du inte vill använda Curseforge kan du manuellt installera .jar filen.*
 1. Ladda ner .jar filen antingen från Github eller Curseforge.
