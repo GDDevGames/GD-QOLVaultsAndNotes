@@ -213,7 +213,7 @@ public class SafeBlock extends BaseEntityBlock {
         }
 
         // Server goes here when none of the items above were used. Client always goes here.
-        return super.useItemOn(stack, state, level, pos, player, hand, hit);
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
 
     @Override

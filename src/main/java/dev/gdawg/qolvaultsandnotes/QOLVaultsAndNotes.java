@@ -12,7 +12,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
@@ -27,7 +26,6 @@ public class QOLVaultsAndNotes {
         ModBlockEntities.register(modEventBus);
         ModMenus.register(modEventBus);
         modEventBus.addListener(this::addCreative);
-        modEventBus.addListener(this::registerScreens);
         modEventBus.addListener(this::registerPackets);
     }
 
@@ -91,23 +89,6 @@ public class QOLVaultsAndNotes {
             }
         );
 
-        // Packet for creating the safe code screen
-        registrar.playToClient(
-            OpenSafeScreenPacket.TYPE,
-            OpenSafeScreenPacket.STREAM_CODEC,
-            (packet, context) -> {
-                context.enqueueWork(() -> {
-                    Minecraft.getInstance().setScreen(
-                        new SafeCodeScreen(packet.pos(), packet.isKeycard())
-                    );
-                });
-            }
-        );
-    }
-
-    private void registerScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenus.VAULT_MENU.get(), VaultScreen::new);
-        event.register(ModMenus.BULLETINBOARD_MENU.get(), BulletinBoardScreen::new);
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {

@@ -3,11 +3,13 @@
 /// ------------------------------------
 package dev.gdawg.qolvaultsandnotes;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
@@ -70,6 +72,16 @@ public class SafeCodeScreen extends Screen {
         } else {
             initPincodeLayout();
         }
+    }
+
+    @Override
+    public boolean keyPressed(KeyEvent keyEvent) {
+        var key = InputConstants.getKey(keyEvent);
+        if (this.minecraft.options.keyInventory.isActiveAndMatches(key)) {
+            this.onClose();
+            return true;
+        }
+        return super.keyPressed(keyEvent);
     }
 
     private void initSerialLayout() {
